@@ -1,10 +1,13 @@
 Package: proteinDiscover
 Type: Package
+Depends:  R (>= 4.0.3)
+Imports: DBI, RSQLite, pool, dplyr, stringr, gtools, ggplot2
 Title: ProteinDiscover
 Version: 0.1.0
-Author: Ben Bruyneel
-Maintainer: The package maintainer <bruyneel.ben@gmail.com>
+Author: Ben Bruyneel <bruyneel.ben@gmail.com>
+Maintainer: Ben Bruyneel <bruyneel.ben@gmail.com>
 Description: Provides an interface to the data contained in Proteome Discoverer (Thermo Scientific) results
-License: GPL-3
+License: GPL (>= 2)
 Encoding: UTF-8
+URL: https://github.com/DarkerThanEver/proteinDiscover
 LazyData: true
