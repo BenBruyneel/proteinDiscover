@@ -1,0 +1,10 @@
+Package: proteinDiscover
+Type: Package
+Title: ProteinDiscover
+Version: 0.1.0
+Author: Ben Bruyneel
+Maintainer: The package maintainer <bruyneel.ben@gmail.com>
+Description: Provides an interface to the data contained in Proteome Discoverer (Thermo Scientific) results
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
