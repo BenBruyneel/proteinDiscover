@@ -1,4 +1,5 @@
 
+
 # ---- raw vector (blob) related functions ----
 
 #' Converts a raw vector into its numeric counterpart(s)
@@ -249,7 +250,7 @@ whichRawListSpecial <- function(blobList, naValue = NA, specialName){
 #' raw vector columns in a data.frame
 #'
 #'  @param df             data.frame containing ONLY blob/rawVector columns
-#'  @param allowSpecials  allow for the 'special' cpnversions of columns with
+#'  @param allowSpecials  allow for the 'special' conversions of columns with
 #'                        the names specified om the specials data.frame.
 #'                        Default = TRUE. Note: it is best to force the type
 #'                        if this is set to FALSE
@@ -260,11 +261,113 @@ determineRawTypes <- function(df, allowSpecials = TRUE){
     blobList <- df[,counter][[1]]
     # as.list(df[,counter])[1] --> doesn't work when first item = NA ?!
     if (allowSpecials & (colnames(df[,counter]) %in% specials$names)){ # special
-      rawType[[counter]] <- whichRawListSpecial(blobList, specialName = colnames(df[,counter]))
+      rawType[[counter]] <- whichRawListSpecial(blobList,
+                                          specialName = colnames(df[,counter]))
     } else {
       rawType[[counter]] <- whichRawList(blobList)
     }
   }
   return(rawType)
+}
+
+#' converts raw columns in a data.frame to the correct data types
+#' the tables/data.frame's coming from a Proteome Discoverer database
+#' (eg .pdResult files) have columns of the type raw vecotr (blob).
+#' These can be converted automatically or semi-automatically by this function
+#'
+#'  @param df   data.frame coming from a table from a Proteome Discoverer
+#'              database (eg .pdResult files)
+#'  @param forceBlob  must be data.frame with 3 columns: name (columnName),
+#'                    what (type)& minimumSize (number of values in a cell)
+#'                    default = NA. forceBlob exists to override automatic
+#'                    conversion (which has a potential for mistakes when
+#'                    determining the type of a rawVector in a columnVector).
+#'                    If 'what' in the forceBlob data.frame = NA, then the
+#'                    columnVector will not be converted, but returned as it
+#'                    is!
+#'  @param allowSpecials  allow for the 'special' cpnversions of columns with
+#'                        the names specified om the specials data.frame.
+#'                        Default = TRUE. Note: it is best to use forceBlob
+#'                        with 'what' set to NA to prevent conversion problems
+#'  @return data.frame with all raw vector ('blob') columns converted to more
+#'          more regular data types
+#'  @note If there are no raw vector columns, then this function has no use and
+#'  may even trigger errors/warnings
+#'  @note This function can only do integer & numeric blob columns (and the
+#'  specials) at the moment
+#'  @note some raw vector columns are actually two (or possibly more) columns
+#'  in one. In those cases each element/cell of the column is two (or more)
+#'  values. This function splits these columns into two seperate ones.
+#'
+#'  @export
+df_transform_raws <- function(df, forceBlob = NA, allowSpecials = TRUE){
+  # figure out which columns are raw vector (class 'blob')
+  blobColumns <- which(
+    unlist(
+      lapply(
+        unname(
+          lapply(df,
+                 function(x){class(x)})),function(x){return("blob" %in% x)})))
+  # determine the type of each blob column
+  colClass <- determineRawTypes(df[blobColumns])
+  # start a new data.frame w/o the blob columns
+  newdf <- df[,-blobColumns]
+  blobNames <- names(df[,blobColumns])
+  for (counter in seq_along(blobColumns)){
+    if (!identical(colClass[counter],NA)){
+      newColumns <- convertRawColumn(
+        df[,blobColumns[counter]][[1]],
+        what = colClass[[counter]]$type,
+        columnName = blobNames[counter],
+        minimumSize = colClass[[counter]]$number,
+        forceBlob = forceBlob
+        )
+      newdf <- bind_cols(newdf, newColumns)
+    } else {
+      warningMessage <- paste(
+        c("Warning: cannot automatically convert column '",
+          blobNames[counter],
+          "' "),
+        collapse = "")
+      warning(warningMessage)
+      newdf <- bind_cols(newdf, df[,blobColumns[counter]])
+    }
+  }
+  return(newdf)
+}
+
+
+# ---- database related functions ----
+
+# Note: proteome discoverer .pdResult files are in the SQLite format
+# functions in this section deal with the database. Some of the
+# functions work with database (query) commands, which is the preferred
+# way. A lot of these functions are merely wrappers to make programming
+# a little easier
+#
+# Note: for future developments when buidling a shiny app it's recommended
+# to use the 'pool' & 'dbplyr' packages to streamline things
+
+#' opens a databse
+#'
+#'  @param  fileName  a character vector specifying the name and location
+#'                    of the database
+#'  @return database access 'handle'
+#'  @note if no file with the name 'fileName' exists, then it will be created
+#'  (but obviously it will be empty, so most further commands will fail)
+#'
+#'  @export
+db_open <- function(fileName){
+  return(pool::dbPool(drv = RSQLite::SQLite(),
+                      dbname = fileName))
+}
+
+#' Closes an open database (opened earlier via eg db_open())
+#'
+#'  @param db   database access 'handle' to be closed
+#'
+#'  @export
+db_close <- function(db){
+  pool::poolClose(db)
 }
 
