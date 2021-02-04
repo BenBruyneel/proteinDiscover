@@ -4,8 +4,8 @@ Depends:  R (>= 4.0.3)
 Imports: DBI, RSQLite, pool, dplyr, stringr, gtools, ggplot2
 Title: ProteinDiscover
 Version: 0.1.0
-Author: Ben Bruyneel <bruyneel.ben@gmail.com>
-Maintainer: Ben Bruyneel <bruyneel.ben@gmail.com>
+Author: Ben Bruyneel <benbruyneel@gmail.com>
+Maintainer: Ben Bruyneel <benbruyneel@gmail.com>
 Description: Provides an interface to the data contained in Proteome Discoverer (Thermo Scientific) results
 License: GPL (>= 2)
 Encoding: UTF-8
