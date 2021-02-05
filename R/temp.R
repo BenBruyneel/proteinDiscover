@@ -22,3 +22,5 @@ gl2 <- map_chr(gl,~class(.x)[1])
 
 data.frame(name = names(gl2), type = unname(gl2))
 
+dbGetQuery(db1,"SELECT * FROM pragma_info('TargetProteins')")
+
