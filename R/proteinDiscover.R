@@ -1,10 +1,3 @@
-library(DBI)
-library(RSQLite)
-library(pool)
-library(dplyr)
-library(stringr)
-library(purrr)
-library(dbAccess)
 
 # ---- raw vector (blob) related functions ----
 
@@ -17,6 +10,7 @@ library(dbAccess)
 #' @return a list of numbers (numeric) or NA (if rawVector is empty)
 #' @note numeric vectors are 9 bytes long, the first 8 are the actual
 #'       number, if the last byte (9) == 0 then the result is NA
+#'
 convertRawNumeric <- function(rawVector, minimumSize = 1){
   lengthVector <- length(rawVector) %/% 9
   if (lengthVector == 0){
@@ -88,7 +82,12 @@ convertRawSpecial <- function(rawVector, size, minimumSize = 1){
   }
 }
 
-#' specials are not numeric or integer, but have chunks of size
+#' pecials are not numeric or integer, but have chunks of a certain size
+#'
+#' @format data.frame with columns 'names' and 'size'
+#' @note each chunk exists of two bytes, first one is logical (boolean):
+#' zero = FALSE, otherwise TRUE. Second byte = also logical: determines if
+#' value is NA (1) or not (0)
 columnSpecials <- data.frame(names = c("AspectBiologicalProcess",
                                        "AspectCellularComponent",
                                        "AspectMolecularFunction"),
@@ -125,7 +124,7 @@ columnSpecials <- data.frame(names = c("AspectBiologicalProcess",
 convertRawColumn <- function(columnVector, what, columnName, minimumSize = 1,
                              forceBlob = NA, allowSpecials = TRUE){
   if (allowSpecials & (columnName %in% columnSpecials$names)){
-    specialSize <- columnSpecials[columnSecials$names == columnName,]$size
+    specialSize <- columnSpecials[columnSpecials$names == columnName,]$size
     converted <- unlist(lapply(columnVector,
                                function(x){
                                  convertRawSpecial(x,specialSize,
@@ -159,7 +158,7 @@ convertRawColumn <- function(columnVector, what, columnName, minimumSize = 1,
       if (nrow(tempdf) == 0){
         tempdf <- data.frame(tempName = converted[mask])
       } else {
-        tempdf <- bind_cols(tempdf, data.frame(tempName = converted[mask]))
+        tempdf <- dplyr::bind_cols(tempdf, data.frame(tempName = converted[mask]))
       }
       colnames(tempdf)[counter] <- paste(c(columnName,"_",toString(counter)),collapse = "")
     }
@@ -245,7 +244,8 @@ whichRawListSpecial <- function(blobList, naValue = NA, specialName){
     firstBlob <- blobList[[which(!is.na(blobList))[1]]]
     theType <- "special"
     numberValues <-
-      length(firstBlob) / specials[specials$names == specialName,]$size
+      length(firstBlob)/
+              columnSpecials[columnSpecials$names == specialName,]$size
       # unknowns will give length of the blob itself
   }
   return(list(type = theType, number = numberValues))
@@ -266,7 +266,8 @@ determineRawTypes <- function(df, allowSpecials = TRUE){
   for (counter in 1:(ncol(df))){
     blobList <- df[,counter][[1]]
     # as.list(df[,counter])[1] --> doesn't work when first item = NA ?!
-    if (allowSpecials & (colnames(df[,counter]) %in% specials$names)){ # special
+    if (allowSpecials & (colnames(df[,counter]) %in% columnSpecials$names)){
+      # special
       rawType[[counter]] <- whichRawListSpecial(blobList,
                                           specialName = colnames(df[,counter]))
     } else {
@@ -276,10 +277,8 @@ determineRawTypes <- function(df, allowSpecials = TRUE){
   return(rawType)
 }
 
-#' converts raw columns in a data.frame to the correct data types
-#' the tables/data.frame's coming from a Proteome Discoverer database
-#' (eg .pdResult files) have columns of the type raw vecotr (blob).
-#' These can be converted automatically or semi-automatically by this function
+#' df_transform_raws(): converts raw columns in a data.frame to the correct
+#' data types
 #'
 #' @param df   data.frame coming from a table from a Proteome Discoverer
 #'             database (eg .pdResult files)
@@ -297,6 +296,9 @@ determineRawTypes <- function(df, allowSpecials = TRUE){
 #'                       with 'what' set to NA to prevent conversion problems
 #' @return data.frame with all raw vector ('blob') columns converted to more
 #'         more regular data types
+#' @note the tables/data.frame's coming from a Proteome Discoverer database
+#' (eg .pdResult files) have columns of the type raw vecotr (blob).
+#' These can be converted automatically or semi-automatically by this function
 #' @note If there are no raw vector columns, then this function has no use and
 #' may even trigger errors/warnings
 #' @note This function can only do integer & numeric blob columns (and the
@@ -304,16 +306,13 @@ determineRawTypes <- function(df, allowSpecials = TRUE){
 #' @note some raw vector columns are actually two (or possibly more) columns
 #' in one. In those cases each element/cell of the column is two (or more)
 #' values. This function splits these columns into two seperate ones.
-#'
 #' @export
 df_transform_raws <- function(df, forceBlob = NA, allowSpecials = TRUE){
   # figure out which columns are raw vector (class 'blob')
   blobColumns <- which(
-    unlist(
-      lapply(
-        unname(
-          lapply(df,
-                 function(x){class(x)})),function(x){return("blob" %in% x)})))
+    unlist(lapply(unname(lapply(df,
+                                function(x){class(x)})),
+                  function(x){return("blob" %in% x)})))
   # determine the type of each blob column
   colClass <- determineRawTypes(df[blobColumns])
   # start a new data.frame w/o the blob columns
@@ -328,7 +327,7 @@ df_transform_raws <- function(df, forceBlob = NA, allowSpecials = TRUE){
         minimumSize = colClass[[counter]]$number,
         forceBlob = forceBlob
         )
-      newdf <- bind_cols(newdf, newColumns)
+      newdf <- dplyr::bind_cols(newdf, newColumns)
     } else {
       warningMessage <- paste(
         c("Warning: cannot automatically convert column '",
@@ -336,9 +335,8 @@ df_transform_raws <- function(df, forceBlob = NA, allowSpecials = TRUE){
           "' "),
         collapse = "")
       warning(warningMessage)
-      newdf <- bind_cols(newdf, df[,blobColumns[counter]])
+      newdf <- dplyr::bind_cols(newdf, df[,blobColumns[counter]])
     }
   }
   return(newdf)
 }
-

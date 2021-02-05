@@ -1,6 +1,6 @@
 Package: proteinDiscover
 Type: Package
-Imports: DBI, RSQLite, pool, dplyr, stringr, dbAcccess
+Imports: dplyr
 Title: ProteinDiscover
 Version: 0.1.0
 Author: Ben Bruyneel <benbruyneel@gmail.com>
@@ -10,3 +10,4 @@ License: GPL (>= 2)
 Encoding: UTF-8
 URL: https://github.com/DarkerThanEver/proteinDiscover
 LazyData: true
+RoxygenNote: 7.1.1
