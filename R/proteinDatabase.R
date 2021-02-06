@@ -141,11 +141,11 @@ isClass <- function(object, whichClass){
 #' get the paptide table belonging defined by PeptideIDs
 #'
 #' @param db database access 'handle'
-#' @param columnNames allows the selection of columns to take from the table,
-#'  default = NA (all columns)
 #' @param PeptideIDs the peptideIDs to be retrieved. This can be in numeric or
 #'  character vector format OR the output from the dbGetPeptideIDs function
 #'  (a data.frame with column "TargetPeptideGroupsPeptideGroupID")
+#' @param columnNames allows the selection of columns to take from the table,
+#'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
 #'  default == TRUE. If more advanced filtering is needed, use db_getTable()
 #' @param sortOrder allows for sorting of the selected columns,
