@@ -24,11 +24,10 @@
 #'  columnNames vector containing a series of "ASC" or "DESC"
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame
-#'
 #' @return a data.frame containing requested data from the protein table or
 #'  a character string specifying a SQL query
 #' @export
-db_getTable <- function(db,
+dbGetTable <- function(db,
                         tableName,
                         columnNames = NA, 
                         filtering = " ",
@@ -78,17 +77,16 @@ db_getTable <- function(db,
 #'  columnNames vector containing a series of "ASC" or "DESC"
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame
-#'
 #' @return a data.frame containing requested data from the protein table or
 #'  a character string specifying a SQL query
 #' @export
-db_getProteinTable <- function(db,
+dbGetProteinTable <- function(db,
                                tableName = "TargetProteins",
                                columnNames = NA,
                                masterProtein = TRUE,
                                sortOrder = NA,
                                SQL = FALSE){
-  return(db_getTable(
+  return(dbGetTable(
     db = db,
     tableName = tableName,
     columnNames = columnNames,

@@ -307,7 +307,7 @@ determineRawTypes <- function(df, allowSpecials = TRUE){
 #' in one. In those cases each element/cell of the column is two (or more)
 #' values. This function splits these columns into two seperate ones.
 #' @export
-df_transform_raws <- function(df, forceBlob = NA, allowSpecials = TRUE){
+dfTransformRaws <- function(df, forceBlob = NA, allowSpecials = TRUE){
   # figure out which columns are raw vector (class 'blob')
   blobColumns <- which(
     unlist(lapply(unname(lapply(df,
