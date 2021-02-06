@@ -8,44 +8,94 @@
 # using IsMasterProtein = TRUE will give the table that proteome discoverer automatically
 # displays (if filters are default)
 
-#' Title
+
+#' get a table from a .pdResult file
 #'
-#' @param dbtbl 
-#' @param MasterProtein 
+#' @param db database access 'handle'
+#' @param tableName used to pass on the name of the table containing the data
+#' @param columnNames allows the selection of columns to take from the table,
+#'  default = NA (all columns)
+#' @filtering allows for " WHERE <expression>" additions to the SQL statement
+#'  default = " " (no filtering). Note: always put a space (" ") before any
+#'  statement
+#' @param sortOrder allows for sorting of the selected columns,
+#'  default = NA, (no sorting). Other valid values are a single character
+#'  string ("ASC" or "DESC") or a character vector of the same length as the
+#'  columnNames vector containing a series of "ASC" or "DESC"
+#' @param SQL allows the function to return the SQL query statement in stead of
+#'  a data.frame
 #'
-#' @return
+#' @return a data.frame containing requested data from the protein table or
+#'  a character string specifying a SQL query
 #' @export
-#'
-#' @examples
-db_get_proteins <- function(db, MasterProtein = TRUE, tableName = "TargetProteins"){
-  if (MasterProtein){
-    return(dplyr::tbl(db, tableName) %>%
-             dplyr::filter(IsMasterProtein == 0) %>%
-             collect())
+db_getTable <- function(db,
+                        tableName,
+                        columnNames = NA, 
+                        filtering = " ",
+                        sortOrder = NA,
+                        SQL = FALSE){
+  if (!identical(sortOrder,NA) & !identical(columnNames,NA)){
+    sortColumns = paste(unlist(purrr::map2(columnNames,
+                                          sortOrder,
+                                          ~paste(.x,.y,collapse = ""))),
+                        collapse = ", ")
   } else {
-    return(dplyr::tbl(db, tableName) %>%
-             dplyr::filter(IsMasterProtein == 0) %>%
-             collect())
+    sortOrder = NA
   }
-  # if (MasterProtein){
-  #   return(df_transform_raws(dbtbl %>% filter(IsMasterProtein == 0) %>% collect()))
-  # } else {
-  #   return(df_transform_raws(dbtbl %>% collect()))
-  # }
+  query <- paste(c("SELECT ",
+                   ifelse(identical(columnNames,NA),
+                          "*",
+                          paste(columnNames,
+                                collapse = ", ")),
+                   " FROM ", tableName,
+                   filtering, 
+                   ifelse(identical(sortOrder,NA),
+                          "",
+                          paste(c(" ORDER BY ",sortColumns),
+                                collapse = "")
+                   )
+  ), collapse = "")
+  if (!SQL){
+    return(pool::dbGetQuery(db, query))
+  } else (
+    return(query)
+  )
 }
 
-# function to get the table "TargetProteins" from the database db and to transform it to
-# data.frame properly
-db_get_proteinTable <- function(db, MasterProtein = TRUE, sorting = NA, descending = TRUE){
-  if (!identical(sorting, NA)){
-    if (descending){
-      return(db_get_proteins(tbl(db,"TargetProteins"), MasterProtein = MasterProtein) %>% arrange(desc(!!sym(sorting))))
-    } else {
-      return(db_get_proteins(tbl(db,"TargetProteins"), MasterProtein = MasterProtein) %>% arrange(!!sym(sorting)))
-    }
-  } else {
-    return(db_get_proteins(tbl(db,"TargetProteins"), MasterProtein = MasterProtein))
-  }
+#' get the protein table from a .pdResult file
+#' (essentially a wrapper around db_getTable())
+#'
+#' @param db database access 'handle'
+#' @param tableName used to pass on the name of the table containing the data,
+#'  default = "TargetProteins"
+#' @param columnNames allows the selection of columns to take from the table,
+#'  default = NA (all columns)
+#' @param masterProtein use the IsMasterProtein column to be zero,
+#'  default == TRUE. If more advanced filtering is needed, use db_getTable()
+#' @param sortOrder allows for sorting of the selected columns,
+#'  default = NA, (no sorting). Other valid values are a single character
+#'  string ("ASC" or "DESC") or a character vector of the same length as the
+#'  columnNames vector containing a series of "ASC" or "DESC"
+#' @param SQL allows the function to return the SQL query statement in stead of
+#'  a data.frame
+#'
+#' @return a data.frame containing requested data from the protein table or
+#'  a character string specifying a SQL query
+#' @export
+db_getProteinTable <- function(db,
+                               tableName = "TargetProteins",
+                               columnNames = NA,
+                               masterProtein = TRUE,
+                               sortOrder = NA,
+                               SQL = FALSE){
+  return(db_getTable(
+    db = db,
+    tableName = tableName,
+    columnNames = columnNames,
+    filtering = ifelse(masterProtein,
+                       " WHERE IsMasterProtein = 0",""),
+    sortOrder = sortOrder,
+    SQL = SQL))
 }
 
 # Function to trasnform the table target peptide groups into a proper data.frame
