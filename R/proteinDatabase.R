@@ -2,13 +2,6 @@
 # ---- database (related) functions ----
 # ---- Proteome Discoverer specific code ----
 
-# Function to transform the table target proteins into a proper data.frame
-# note: the argument dbtble must be the in tbl() format. Under normal circumstances
-# it is the "TargetProteins" table in the .pdResult file
-# using IsMasterProtein = TRUE will give the table that proteome discoverer automatically
-# displays (if filters are default)
-
-
 #' get a table from a .pdResult file
 #'
 #' @param db database access 'handle'
@@ -28,11 +21,11 @@
 #'  a character string specifying a SQL query
 #' @export
 dbGetTable <- function(db,
-                        tableName,
-                        columnNames = NA, 
-                        filtering = " ",
-                        sortOrder = NA,
-                        SQL = FALSE){
+                       tableName,
+                       columnNames = NA, 
+                       filtering = " ",
+                       sortOrder = NA,
+                       SQL = FALSE){
   if (!identical(sortOrder,NA) & !identical(columnNames,NA)){
     sortColumns = paste(unlist(purrr::map2(columnNames,
                                           sortOrder,
