@@ -1,3 +1,5 @@
 export("dfTransformRaws")
 export("dbGetTable")
 export("dbGetProteinTable")
+export("dbGetPeptideIDs")
+export("dbGetPeptideTable")

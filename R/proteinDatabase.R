@@ -24,7 +24,7 @@
 #'  columnNames vector containing a series of "ASC" or "DESC"
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame
-#' @return a data.frame containing requested data from the protein table or
+#' @return a data.frame containing requested data from a database table or
 #'  a character string specifying a SQL query
 #' @export
 dbGetTable <- function(db,
@@ -65,8 +65,6 @@ dbGetTable <- function(db,
 #' (essentially a wrapper around db_getTable())
 #'
 #' @param db database access 'handle'
-#' @param tableName used to pass on the name of the table containing the data,
-#'  default = "TargetProteins"
 #' @param columnNames allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
@@ -81,14 +79,13 @@ dbGetTable <- function(db,
 #'  a character string specifying a SQL query
 #' @export
 dbGetProteinTable <- function(db,
-                               tableName = "TargetProteins",
                                columnNames = NA,
                                masterProtein = TRUE,
                                sortOrder = NA,
                                SQL = FALSE){
   return(dbGetTable(
     db = db,
-    tableName = tableName,
+    tableName = "TargetProteins",
     columnNames = columnNames,
     filtering = ifelse(masterProtein,
                        " WHERE IsMasterProtein = 0",""),
@@ -96,62 +93,116 @@ dbGetProteinTable <- function(db,
     SQL = SQL))
 }
 
-# Function to trasnform the table target peptide groups into a proper data.frame
-# note: the argument dbtble must be the in tbl() format. Under normal circumstances
-# it is the "TargetPeptideGroups" table in the .pdResult file
-# note: removeNA is to remove a lot of rows present in the 'raw' table
-# during development of the code it was discovered that there are a lot
-# of rows with (a lot of ) NA values in their fields. Removing these will
-# give a table which is displayed by default when using Proteome Discoverer
-db_get_peptides <- function(dtbl, removeNA = TRUE){
-  if (removeNA){
-    return(df_transform_raws(dtbl %>% filter(!is.na(MasterProteinAccessions)) %>% collect()))
-  } else {
-    return(df_transform_raws(dtbl %>% collect()))
+#' get the peptideID's from (a set of) proteinGroupIDs
+#' 
+#' @param db database access 'handle'
+#' @param proteinGroupIDs the proteinGroupIDs usually come from the
+#'  TargetProteinTable. This can be in numeric or character vector format
+#' @param SQL allows the function to return the SQL query statement in stead of
+#'  a data.frame  
+#' @return a data.frame containing requested data from the protein table or
+#' a character string specifying a SQL query
+#' @note to get the proteinpeptidelink (table =
+#'  "TargetProteinGroupsTargetPeptideGroups"). In goes "ProteinGroupID" from
+#'  the table "TargetProteins" (Note: it's possible to use a c(,,,) to get
+#'  the result for a number of proteins at the same time). The result is a
+#'  list of numbers which are the "TargetProteinGroupsProteinGroupID" in the
+#'  "TargetPeptideGroups" table
+#'  @export
+dbGetPeptideIDs <- function(db, ProteinGroupIDs, SQL = FALSE){
+  if (!is.character(ProteinGroupIDs)){
+    ProteinGroupIDs <- as.character(ProteinGroupIDs)
   }
+  return(dbGetTable(
+    db = db,
+    tableName = "TargetProteinGroupsTargetPeptideGroups",
+    columnNames = "TargetPeptideGroupsPeptideGroupID",
+    filtering = paste(c(" WHERE TargetProteinGroupsProteinGroupID IN (",
+                        paste(c("'",
+                                paste(ProteinGroupIDs,collapse = "','"),
+                                "'"),
+                              collapse = ""),
+                        ")"),
+                      collapse = ""),
+    sortOrder = NA,
+    SQL = SQL))
 }
 
-# Function to trasnform the table target psms into a proper data.frame
-# note: the argument dbtble must be the in tbl() format. Under normal circumstances
-# it is the "TargetPsms" table in the .pdResult file
-# note: no raw vector columns were  discovered in this type of table (so far)
-# so df_transform_raws() is not used
-# note: removeNA is to remove a lot of rows present in the 'raw' table
-# during development of the code it was discovered that there are a lot
-# of rows with (a lot of ) NA values in their fields. Removing these will
-# give a table which is displayed by default when using Proteome Discoverer
-db_get_PSMs <- function(dtbl, removeNA = TRUE){
-  if (removeNA){
-    return(dtbl %>% filter(!is.na(MasterProteinAccessions)) %>% collect())
+#' helper function to determine if object == whichClass or a descendant of
+#'  whichClass
+#' 
+#' @param object a data object of some class
+#' @param whichClass character string: class name to be tested
+#' @return TRUE or FALSE
+isClass <- function(object, whichClass){
+  return(whichClass %in% class(object))
+}
+
+#' get the paptide table belonging defined by PeptideIDs
+#'
+#' @param db database access 'handle'
+#' @param columnNames allows the selection of columns to take from the table,
+#'  default = NA (all columns)
+#' @param PeptideIDs the peptideIDs to be retrieved. This can be in numeric or
+#'  character vector format OR the output from the dbGetPeptideIDs function
+#'  (a data.frame with column "TargetPeptideGroupsPeptideGroupID")
+#' @param masterProtein use the IsMasterProtein column to be zero,
+#'  default == TRUE. If more advanced filtering is needed, use db_getTable()
+#' @param sortOrder allows for sorting of the selected columns,
+#'  default = NA, (no sorting). Other valid values are a single character
+#'  string ("ASC" or "DESC") or a character vector of the same length as the
+#'  columnNames vector containing a series of "ASC" or "DESC"
+#' @param SQL allows the function to return the SQL query statement in stead of
+#'  a data.frame
+#' @return a data.frame containing requested data from the peptide table or
+#'  a character string specifying a SQL query
+#' @export
+dbGetPeptideTable <- function(db,
+                              PeptideIDs = NA,
+                              columnNames = NA,
+                              masterProtein = TRUE,
+                              sortOrder = NA,
+                              SQL = FALSE){
+  if (identical(PeptideIDs,NA)){
+    return(
+      dbGetTable(
+        db = db,
+        tableName = "TargetPeptideGroups",
+        columnNames = columnNames,
+        filtering = paste(
+          c(" WHERE PeptideGroupID IN ",
+            "(SELECT TargetPeptideGroupsPeptideGroupID FROM ",
+            "TargetProteinGroupsTargetPeptideGroups WHERE ",
+            "TargetProteinGroupsProteinGroupID IN (SELECT ",
+            "ProteinGroupIDs FROM TargetProteins ",
+            ifelse(masterProtein,
+                   "WHERE IsMasterProtein = 0",""),
+            "))"),
+          collapse = ""),
+        sortOrder = sortOrder,
+        SQL = SQL)
+    )
   } else {
-    return(dtbl %>% collect())
+    if (isClass(PeptideIDs,"data.frame")){
+      # if so then assumed to be output from dbGetPeptideIDs
+      PeptideIDs <- as.character(PeptideIDs$TargetPeptideGroupsPeptideGroupID)
+    } else {
+      if (!is.character(PeptideIDs)){
+        PeptideIDs <- as.character(PeptideIDs)
+      }
+    }
+    return(
+      dbGetTable(
+        db = db,
+        tableName = "TargetPeptideGroups",
+        columnNames = columnNames,
+        filtering = paste(
+          c(" WHERE PeptideGroupID IN ",
+            "(", paste(PeptideIDs, collapse = ","),")"), collapse = ""),
+        sortOrder = sortOrder,
+        SQL = SQL)
+    )
   }
-}
-
-# to get the proteinpeptidelink (table = "TargetProteinGroupsTargetPeptideGroups")
-# in goes "ProteinGroupID" from the table "TargetProteins" (Note: it's possible to use a c(,,,) to get the result for a number of proteins at the same time)
-# result ia a list of numbers which are the "TargetProteinGroupsProteinGroupID" in the "TargetPeptideGroups" table
-db_get_peptideIDs <- function(db, ProteinGroupIDs){
-  return((tbl(db, "TargetProteinGroupsTargetPeptideGroups") %>% filter(TargetProteinGroupsProteinGroupID %in% ProteinGroupIDs) %>% collect())$TargetPeptideGroupsPeptideGroupID)
-}
-
-# to get the peptide table belonging to a protein
-# in goes the PeptideIDs coming from eg db_get_peptideIDs
-# out comes a data.frame which is a subset of "TargetPeptideGroups"
-db_get_peptideTable <- function(db, PeptideIDs){
-  return(tbl(db,"TargetPeptideGroups") %>% filter(PeptideGroupID %in% PeptideIDs) %>% collect() %>% df_transform_raws())
-}
-
-# to get the complete peptide table = all peptides belonging to all proteins
-# in goes only the database, out comes the table WITH raw vector columns still intact
-# advantage of this function is that is 'pure' SQL
-# note: out comes tibble() to make sure for compatibility with df_transform_raws()
-db_get_all_peptideTable <- function(db){
-  return(tibble(dbGetQuery(db,"SELECT * FROM TargetPeptideGroups WHERE PeptideGroupID IN
-                    (SELECT TargetPeptideGroupsPeptideGroupID FROM TargetProteinGroupsTargetPeptideGroups
-                     WHERE  TargetProteinGroupsProteinGroupID IN
-                      (SELECT ProteinGroupIDs FROM TargetProteins WHERE IsMasterProtein = 0))"))
-  )
 }
 
 # to get the peptidepsmlink (table "TargetPsmsTargetPeptideGroups")
