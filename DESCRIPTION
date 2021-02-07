@@ -1,6 +1,6 @@
 Package: proteinDiscover
 Type: Package
-Imports: dplyr, purrr, pool
+Imports: magrittr, dplyr, purrr, lubridate, pool
 Title: ProteinDiscover
 Version: 0.1.0
 Author: Ben Bruyneel <benbruyneel@gmail.com>

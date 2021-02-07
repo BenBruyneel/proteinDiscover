@@ -1,6 +1,3 @@
-
-# ---- raw vector (blob) related functions ----
-
 #' Converts a raw vector into its numeric counterpart(s)
 #'
 #' @param rawVector   A vector of type 'raw' (blob)
@@ -82,7 +79,7 @@ convertRawSpecial <- function(rawVector, size, minimumSize = 1){
   }
 }
 
-#' pecials are not numeric or integer, but have chunks of a certain size
+#' specials are not numeric or integer, but have chunks of a certain size
 #'
 #' @format data.frame with columns 'names' and 'size'
 #' @note each chunk exists of two bytes, first one is logical (boolean):
