@@ -261,9 +261,9 @@ whichRawListSpecial <- function(blobList, naValue = NA, specialName){
 determineRawTypes <- function(df, allowSpecials = TRUE){
   rawType = list()
   for (counter in 1:(ncol(df))){
-    blobList <- df[,counter][[1]]
+    blobList <- df[,counter]#[[1]]                                              # recent change, need to test
     # as.list(df[,counter])[1] --> doesn't work when first item = NA ?!
-    if (allowSpecials & (colnames(df[,counter]) %in% columnSpecials$names)){
+    if (allowSpecials & (colnames(df)[counter] %in% columnSpecials$names)){
       # special
       rawType[[counter]] <- whichRawListSpecial(blobList,
                                           specialName = colnames(df[,counter]))
@@ -318,7 +318,7 @@ dfTransformRaws <- function(df, forceBlob = NA, allowSpecials = TRUE){
   for (counter in seq_along(blobColumns)){
     if (!identical(colClass[counter],NA)){
       newColumns <- convertRawColumn(
-        df[,blobColumns[counter]][[1]],
+        df[,blobColumns[counter]], #[[1]],                                      # recent change, need to test
         what = colClass[[counter]]$type,
         columnName = blobNames[counter],
         minimumSize = colClass[[counter]]$number,
