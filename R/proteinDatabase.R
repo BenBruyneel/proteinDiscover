@@ -8,9 +8,9 @@
 #'  default = " " (no filtering). Note: always put a space (" ") before any
 #'  statement
 #' @param sortOrder allows for sorting of the selected columns,
-#'  default = NA, (no sorting). Other valid values are a single character
-#'  string ("ASC" or "DESC") or a character vector of the same length as the
-#'  columnNames vector containing a series of "ASC" or "DESC"
+#'  default = NA, (no sorting). Other valid value is a character character
+#'  vector of columnNames to be used for sorting string (with "ASC" or "DESC"
+#'  if needed) 
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame
 #' @return a data.frame containing requested data from a database table or
@@ -22,11 +22,8 @@ dbGetTable <- function(db,
                        filtering = " ",
                        sortOrder = NA,
                        SQL = FALSE){
-  if (!identical(sortOrder,NA) & !identical(columnNames,NA)){
-    sortColumns = paste(unlist(purrr::map2(columnNames,
-                                          sortOrder,
-                                          ~paste(.x,.y,collapse = ""))),
-                        collapse = ", ")
+  if (!identical(sortOrder,NA)){
+    sortColumns = paste(c(sortOrder),collapse = ", ")
   } else {
     sortOrder = NA
   }

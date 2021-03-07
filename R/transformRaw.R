@@ -314,7 +314,7 @@ dfTransformRaws <- function(df, forceBlob = NA, allowSpecials = TRUE){
   colClass <- determineRawTypes(df[blobColumns])
   # start a new data.frame w/o the blob columns
   newdf <- df[,-blobColumns]
-  blobNames <- names(df[,blobColumns])
+  blobNames <- names(df)[blobColumns]
   for (counter in seq_along(blobColumns)){
     if (!identical(colClass[counter],NA)){
       newColumns <- convertRawColumn(
