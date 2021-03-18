@@ -128,6 +128,7 @@ dbGetPeptideIDs <- function(db, ProteinGroupIDs, SQL = FALSE){
 #' @param object a data object of some class
 #' @param whichClass character string: class name to be tested
 #' @return TRUE or FALSE
+#' @export
 isClass <- function(object, whichClass){
   return(whichClass %in% class(object))
 }
