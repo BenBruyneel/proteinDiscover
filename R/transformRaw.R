@@ -56,22 +56,22 @@ convertRawInteger <- function(rawVector, minimumSize = 1){
 #' Converts a raw vector into its boolean counterpart(s)
 #'
 #' @param rawVector   A vector of type 'raw' (blob)
-#' @param minimumSize A number (integer) indicating how many booleans are
-#'                    in the rawVector. Default = 1. This catches potential
-#'                    rawVectors that are empty/NA
+#' @param specialSize length of the result, ie the number of columns in the raw.
+#'                    This is relevant for the so called specials. It indicates
+#'                    how many booleans are in the rawVector
 #' @return a list of booleans or NA (if rawVector is empty)
 #' @note boolean vectors are 5 bytes long, the first 4 are the actual
 #'       boolean (anything but 0 is TRUE), if the last byte (5) == 0 then
 #'       the result is NA
-convertRawSpecial <- function(rawVector, size, minimumSize = 1){
+convertRawSpecial <- function(rawVector, specialSize){
   if (identical(rawVector,NULL)){
-    return((rep(list(NA),minimumSize)))
+    return((rep(list(NA), specialSize)))
   } else {
-    lengthVector <- length(rawVector) %/% size
+    lengthVector <- specialSize
     lapply(0:(lengthVector-1),function(x){
-      if (!is.null(rawVector[((x*size)+1):((x+1)*5)])){
-        if (rawVector[((x*size)+1):((x+1)*size)][[size]] != as.raw(0)){
-          return(ifelse(rawVector[((x*size)+1)] == as.raw(0),FALSE,TRUE))
+      if (!is.null(rawVector[((x*2)+1):((x+1)*5)])){
+        if (rawVector[((x*2)+1):((x+1)*2)][[2]] != as.raw(0)){
+          return(ifelse(rawVector[((x*2)+1)] == as.raw(0),FALSE,TRUE))
         }
       }
       return(NA)
@@ -120,12 +120,22 @@ columnSpecials <- data.frame(names = c("AspectBiologicalProcess",
 #'        column1_1, column1_2, etc
 convertRawColumn <- function(columnVector, what, columnName, minimumSize = 1,
                              forceBlob = NA, allowSpecials = TRUE){
-  if (allowSpecials & (columnName %in% columnSpecials$names)){
-    specialSize <- columnSpecials[columnSpecials$names == columnName,]$size
-    converted <- unlist(lapply(columnVector,
-                               function(x){
-                                 convertRawSpecial(x,specialSize,
-                                                   minimumSize = minimumSize)}))
+  if (columnName %in% columnSpecials$names){
+    if (allowSpecials){
+      # find length blob specials
+      specialSize <- max(unlist(lapply(columnVector, length)))
+      # divide by special size, 2 if it is boolean raw
+      specialSize <- specialSize/
+        columnSpecials[columnSpecials$names == columnName,]$size
+      converted <- unlist(lapply(columnVector,
+                                 function(x){
+                                   convertRawSpecial(x,
+                                                     specialSize = specialSize)}))
+      numberColumns <- specialSize
+    } else {
+      converted <- columnVector
+      numberColumns <- 1
+    }
   } else {
     if (!identical(forceBlob,NA)){
       if (columnName %in% forceBlob$name){
@@ -145,8 +155,12 @@ convertRawColumn <- function(columnVector, what, columnName, minimumSize = 1,
         converted <- unlist(lapply(columnVector,function(x){convertRawNumeric(x, minimumSize = minimumSize)}))
       }
     }
+    numberColumns <- minimumSize  #length(converted) %/% length(columnVect
   }
-  numberColumns <- minimumSize  #length(converted) %/% length(columnVector)
+  # numberColumns <- minimumSize  #length(converted) %/% length(columnVector)
+  tempdf <- data.frame(matrix(converted, ncol = numberColumns))
+  colnames(tempdf) <- paste(columnName,"_",1:numberColumns,sep = "")
+  return(tempdf)
   if (numberColumns > 1){
     tempdf <- data.frame()
     for (counter in 1:numberColumns){
@@ -227,6 +241,7 @@ whichRawList <- function(blobList, naValue = NA){
 #' @param blobList A list of raw vectors, usually the column of a data.frame
 #' @param naValue  A default value to be used, when it the type cannot be
 #'                 determined (when a column contains only NA's)
+#' @param specialName name of the column which is a special
 #' @return a list of (type = , number = ) where type is the type of raw vector
 #'         and number is the number of items per cell
 #' @note the type is always either NA or "special". This function is actually
@@ -311,7 +326,7 @@ dfTransformRaws <- function(df, forceBlob = NA, allowSpecials = TRUE){
                                 function(x){class(x)})),
                   function(x){return("blob" %in% x)})))
   # determine the type of each blob column
-  colClass <- determineRawTypes(df[blobColumns])
+  colClass <- determineRawTypes(df[blobColumns], allowSpecials = allowSpecials)
   # start a new data.frame w/o the blob columns
   newdf <- df[,-blobColumns]
   blobNames <- names(df)[blobColumns]
@@ -322,7 +337,8 @@ dfTransformRaws <- function(df, forceBlob = NA, allowSpecials = TRUE){
         what = colClass[[counter]]$type,
         columnName = blobNames[counter],
         minimumSize = colClass[[counter]]$number,
-        forceBlob = forceBlob
+        forceBlob = forceBlob,
+        allowSpecials = allowSpecials
         )
       newdf <- dplyr::bind_cols(newdf, newColumns)
     } else {

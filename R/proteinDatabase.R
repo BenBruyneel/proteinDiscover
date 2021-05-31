@@ -4,9 +4,9 @@
 #' @param tableName used to pass on the name of the table containing the data
 #' @param columnNames allows the selection of columns to take from the table,
 #'  default = NA (all columns)
-#' @filtering allows for " WHERE <expression>" additions to the SQL statement
-#'  default = " " (no filtering). Note: always put a space (" ") before any
-#'  statement
+#' @param filtering allows for " WHERE <expression>" additions to the SQL
+#'  statement default = " " (no filtering). Note: always put a space (" ")
+#'  before any statement
 #' @param sortOrder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid value is a character character
 #'  vector of columnNames to be used for sorting string (with "ASC" or "DESC"
@@ -96,15 +96,15 @@ dbGetProteinTable <- function(db,
 #'  list of numbers which are the "TargetProteinGroupsProteinGroupID" in the
 #'  "TargetPeptideGroups" table
 #'  @export
-dbGetPeptideIDs <- function(db, ProteinGroupIDs, SQL = FALSE){
-  if (isClass(ProteinGroupIDs,"data.frame")){
+dbGetPeptideIDs <- function(db, proteinGroupIDs, SQL = FALSE){
+  if (isClass(proteinGroupIDs,"data.frame")){
     # if so then assumed to be output from dbGetProteinTable
     # for speed set columnNames = "ProteinGroupID"
-    ProteinGroupIDs <-
-      as.character(ProteinGroupIDs$ProteinGroupID)
+    proteinGroupIDs <-
+      as.character(proteinGroupIDs$ProteinGroupID)
   } else {
-    if (!is.character(ProteinGroupIDs)){
-      ProteinGroupIDs <- as.character(ProteinGroupIDs)
+    if (!is.character(proteinGroupIDs)){
+      proteinGroupIDs <- as.character(proteinGroupIDs)
     }
   }
   return(dbGetTable(
@@ -113,7 +113,7 @@ dbGetPeptideIDs <- function(db, ProteinGroupIDs, SQL = FALSE){
     columnNames = "TargetPeptideGroupsPeptideGroupID",
     filtering = paste(c(" WHERE TargetProteinGroupsProteinGroupID IN (",
                         paste(c("'",
-                                paste(ProteinGroupIDs,collapse = "','"),
+                                paste(proteinGroupIDs,collapse = "','"),
                                 "'"),
                               collapse = ""),
                         ")"),
