@@ -325,6 +325,9 @@ dfTransformRaws <- function(df, forceBlob = NA, allowSpecials = TRUE){
     unlist(lapply(unname(lapply(df,
                                 function(x){class(x)})),
                   function(x){return("blob" %in% x)})))
+  if  (purrr::is_empty(blobColumns)){
+    return(df) # no blob columns present
+  } 
   # determine the type of each blob column
   colClass <- determineRawTypes(df[blobColumns], allowSpecials = allowSpecials)
   # start a new data.frame w/o the blob columns
