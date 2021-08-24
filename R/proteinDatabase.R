@@ -483,6 +483,9 @@ na.date <- function(theDate){
   return(theDate)
 }
 
+# just to prevent note in package check with CreationDate in mutate statement
+utils::globalVariables(c("CreationDate"))
+
 #' get the table with info on the files used in the search from the database
 #'
 #' @param db database access 'handle'
