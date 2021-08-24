@@ -158,7 +158,7 @@ convertRawColumn <- function(columnVector, what, columnName, minimumSize = 1,
     numberColumns <- minimumSize  #length(converted) %/% length(columnVect
   }
   # numberColumns <- minimumSize  #length(converted) %/% length(columnVector)
-  tempdf <- data.frame(matrix(converted, ncol = numberColumns))
+  tempdf <- data.frame(matrix(converted, ncol = numberColumns, byrow = TRUE))
   colnames(tempdf) <- paste(columnName,"_",1:numberColumns,sep = "")
   return(tempdf)
   if (numberColumns > 1){
