@@ -47,6 +47,25 @@ dbGetTable <- function(db,
   )
 }
 
+#' helper function to prevent having to remember the somewhat long names of
+#' the most used tables
+#' 
+#' @param whichTable can be either "proteins","peptides","psms" or "consensus"
+#'  character do not need to be lower or upper case (all are converted to upper
+#'  case). If another string is used as a parameter, the function will return
+#'  NA
+#' @return a string containing the protein discoverer table name corresponding
+#'  to the parameter whichTable
+#' @export
+tableName <- function(whichTable = "proteins"){
+  return(switch(toupper(toString(whichTable)),
+                "PROTEINS"  = "TargetProteins",
+                "PEPTIDES"  = "TargetPeptideGroups",
+                "PSMS"      = "TargetPsms",
+                "CONSENSUS" = "ConsensusFeatures",
+                NA))
+}
+
 #' get the protein table from a .pdResult file
 #' (essentially a wrapper around db_getTable())
 #'
