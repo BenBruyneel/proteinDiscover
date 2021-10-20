@@ -79,16 +79,21 @@ convertRawSpecial <- function(rawVector, specialSize){
   }
 }
 
-#' specials are not numeric or integer, but have chunks of a certain size
-#'
-#' @format data.frame with columns 'names' and 'size'
+#' Specials are not numeric or integer, but have chunks of a certain size
+#' All encountered in Proteome Discoverer are actually booleans with a value
+#' 0 (FALSE), 1 (TRUE) or NA
+#' 
+#' @return data.frame with columns 'names' and 'size'
 #' @note each chunk exists of two bytes, first one is logical (boolean):
 #' zero = FALSE, otherwise TRUE. Second byte = also logical: determines if
 #' value is NA (1) or not (0)
-columnSpecials <- data.frame(names = c("AspectBiologicalProcess",
-                                       "AspectCellularComponent",
-                                       "AspectMolecularFunction"),
-                             size = c(2,2,2))
+#' @export
+columnSpecials <- function(){
+  return(data.frame(names = c("AspectBiologicalProcess",
+                              "AspectCellularComponent",
+                              "AspectMolecularFunction"),
+                    size = c(2,2,2)))
+}
 
 #' function that converts a data.frame column with raw vectors into
 #' one or more columns containing the integer/numeric/... counterparts

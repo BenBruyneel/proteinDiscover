@@ -1,5 +1,7 @@
 purrr::walk(list.files(path = "R", pattern = "*.R",
                        full.names = TRUE), source)
+
+library(pool)
 library(dbAccess)
 library(dplyr)
 
@@ -13,12 +15,12 @@ blobLength <- function(blobList){
               na.rm = TRUE))
 }
 
-db_getBlobs <- function(db, tableName){
+db_getBlobs <- function(db, tableName = tableName()){
   return(db_columnInfo(db = db, tableName = tableName) %>%
            filter(type == "blob"))
 }
 
-db_getBlobs(db = tkodb, tableName = "TargetProteins") %>%
+db_getBlobs(db = tkodb, tableName = tableName()) %>%
   filter(!grepl(name, pattern = "Aspect"))
 
 determineBlobLengths <- function(columnInfo, theTable){
@@ -26,11 +28,13 @@ determineBlobLengths <- function(columnInfo, theTable){
   return(columnInfo)
 }
 
-determineBlobLengths(columnInfo = db_getBlobs(db = tkodb, tableName = "TargetProteins") %>%
+determineBlobLengths(columnInfo = db_getBlobs(db = tkodb, tableName = tableName()) %>%
                        filter(!grepl(name, pattern = "Aspect")), theTable = tkoProt)
 
+determineBlobLengths(columnInfo = db_getBlobs(db = tkodb, tableName = tableName()), theTable = tkoProt)
 
-frcblb$length <- unlist(lapply(1:nrow(frcblb),function(x){blobLength(tkoProt[,frcblb$name[x]])}))
+frcblb <- determineBlobLengths(columnInfo = db_getBlobs(db = tkodb, tableName = tableName()) %>%
+                               filter(!grepl(name, pattern = "Aspect")), theTable = tkoProt)
 
 
 determineBlobTypeRaw <- function(blobLength){
@@ -40,7 +44,7 @@ determineBlobTypeRaw <- function(blobLength){
         switch(toString(x),
                "5"="integer",
                "9"="numeric",
-               "N/A")
+               NA)
       }
       )
     )
@@ -48,6 +52,7 @@ determineBlobTypeRaw <- function(blobLength){
 }
 
 determineBlobTypeRaw(9)
+determineBlobTypeRaw(36)
 
 # minimumNumber is first checked only when preferMinimumNumber = TRUE
 determineBlobType <- function(blobLength, minimumNumber,
@@ -150,3 +155,6 @@ determineBlobTypes <- function(columnInfo, theTable, minimumNumber,
                                                         ratioNumberOfGroups = ratioNumberOfGroups, useRatios = useRatios))
   return(columnInfo)
 }
+
+determineBlobTypes(columnInfo = db_getBlobs(db = tkodb, tableName = "TargetProteins"), theTable = tkoProt,
+                   minimumNumber = 1, numberOfGroups = 1,ratioNumberOfGroups = 1)

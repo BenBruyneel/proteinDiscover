@@ -90,7 +90,7 @@ dbGetProteinTable <- function(db,
                                SQL = FALSE){
   return(dbGetTable(
     db = db,
-    tableName = "TargetProteins",
+    tableName = tableName("proteins"),
     columnNames = columnNames,
     filtering = ifelse(masterProtein,
                        " WHERE IsMasterProtein = 0",""),
@@ -181,7 +181,7 @@ dbGetPeptideTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = "TargetPeptideGroups",
+        tableName = tableName("peptides"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideGroupID IN ",
@@ -208,7 +208,7 @@ dbGetPeptideTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = "TargetPeptideGroups",
+        tableName = tableName("peptides"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideGroupID IN ",
@@ -285,7 +285,7 @@ dbGetPsmTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = "TargetPsms",
+        tableName = tableName("psms"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideID IN ",
@@ -325,7 +325,7 @@ dbGetPsmTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = "TargetPsms",
+        tableName = tableName("psms"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideID IN ",
@@ -402,7 +402,7 @@ dbGetConsensusTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = "ConsensusFeatures",
+        tableName = tableName("Consensus"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE Id IN ",
@@ -441,7 +441,7 @@ dbGetConsensusTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = "ConsensusFeatures",
+        tableName = tableName("Consensus"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE Id IN ",
