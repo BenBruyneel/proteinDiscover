@@ -8,95 +8,97 @@ library(dplyr)
 tkodb <- db_open("/home/ben/Documents/Thermo/Hela2/210105-data07.pdResult")
 
 tkoProt <- dbGetProteinTable(db = tkodb)
+# 
+# blobLength <- function(blobList){
+#   return(mean(unlist(lapply((lapply(blobList,length)),
+#                             function(x){ifelse(x==0,NA,x)})),
+#               na.rm = TRUE))
+# }
+# 
+# db_getBlobs <- function(db, tableName = tableName()){
+#   return(db_columnInfo(db = db, tableName = tableName) %>%
+#            filter(type == "blob"))
+# }
+# 
+# db_getBlobs(db = tkodb, tableName = tableName()) %>%
+#   filter(!grepl(name, pattern = "Aspect"))
+# 
+# determineBlobLengths <- function(columnInfo, theTable){
+#   columnInfo$length <- unlist(lapply(1:nrow(columnInfo),function(x){blobLength(theTable[,columnInfo$name[x]])}))
+#   return(columnInfo)
+# }
 
-blobLength <- function(blobList){
-  return(mean(unlist(lapply((lapply(blobList,length)),
-                            function(x){ifelse(x==0,NA,x)})),
-              na.rm = TRUE))
-}
+determineBlobLengths(blobDF = db_getBlobs(db = tkodb, tableName = tableName()),
+                     theTable = tkoProt)
+determineBlobLengths(blobDF = getBlobs(tkoProt),
+                     theTable = tkoProt)
 
-db_getBlobs <- function(db, tableName = tableName()){
-  return(db_columnInfo(db = db, tableName = tableName) %>%
-           filter(type == "blob"))
-}
+determineBlobLengths(blobDF = db_getBlobs(db = tkodb, tableName = tableName()), theTable = tkoProt)
 
-db_getBlobs(db = tkodb, tableName = tableName()) %>%
-  filter(!grepl(name, pattern = "Aspect"))
+frcblb <- determineBlobLengths(blobDF = db_getBlobs(db = tkodb, tableName = tableName()),
+                               theTable = tkoProt)
+frcblb
 
-determineBlobLengths <- function(columnInfo, theTable){
-  columnInfo$length <- unlist(lapply(1:nrow(columnInfo),function(x){blobLength(theTable[,columnInfo$name[x]])}))
-  return(columnInfo)
-}
-
-determineBlobLengths(columnInfo = db_getBlobs(db = tkodb, tableName = tableName()) %>%
-                       filter(!grepl(name, pattern = "Aspect")), theTable = tkoProt)
-
-determineBlobLengths(columnInfo = db_getBlobs(db = tkodb, tableName = tableName()), theTable = tkoProt)
-
-frcblb <- determineBlobLengths(columnInfo = db_getBlobs(db = tkodb, tableName = tableName()) %>%
-                               filter(!grepl(name, pattern = "Aspect")), theTable = tkoProt)
-
-
-determineBlobTypeRaw <- function(blobLength){
-  return(
-    unlist(
-      lapply(blobLength, function(x){
-        switch(toString(x),
-               "5"="integer",
-               "9"="numeric",
-               NA)
-      }
-      )
-    )
-  )
-}
+# determineBlobTypeRaw <- function(blobLength){
+#   return(
+#     unlist(
+#       lapply(blobLength, function(x){
+#         switch(toString(x),
+#                "5"="integer",
+#                "9"="numeric",
+#                NA)
+#       }
+#       )
+#     )
+#   )
+# }
 
 determineBlobTypeRaw(9)
 determineBlobTypeRaw(36)
 
-# minimumNumber is first checked only when preferMinimumNumber = TRUE
-determineBlobType <- function(blobLength, minimumNumber,
-                              numberOfGroups = minimumNumber, preferNumberOfGroups = TRUE,
-                              ratioNumberOfGroups = numberOfGroups - 1, useRatios = TRUE){
-  if (blobLength %in% c(5,9)){
-    return(data.frame(what = determineBlobTypeRaw(blobLength), minimumSize = 1))
-  }
-  if (preferNumberOfGroups){
-    if ((blobLength %% numberOfGroups) == 0){
-      return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
-                        minimumSize = numberOfGroups))
-    } else {
-      if ((blobLength %% minimumNumber) != 0){
-        if (useRatios){
-          if ((blobLength %% ratioNumberOfGroups) == 0){
-            return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
-                              minimumSize = ratioNumberOfGroups))
-          }
-        }
-        warning("Possibly invalid blob type")
-      }
-      return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
-                        minimumSize = minimumNumber))
-    }
-  } else {
-    if ((blobLength %% minimumNumber) == 0){
-      return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
-                        minimumSize = minimumNumber))
-    } else {
-      if ((blobLength %% numberOfGroups) != 0){  # unsure if this is needed/good
-        if (useRatios){
-          if ((blobLength %% ratioNumberOfGroups) == 0){
-            return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
-                              minimumSize = ratioNumberOfGroups))
-          }
-        }
-        warning("Possibly invalid blob type!")
-      }
-      return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
-                        minimumSize = numberOfGroups))
-    }
-  } 
-}
+# # minimumNumber is first checked only when preferMinimumNumber = TRUE
+# determineBlobType <- function(blobLength, minimumNumber,
+#                               numberOfGroups = minimumNumber, preferNumberOfGroups = TRUE,
+#                               ratioNumberOfGroups = numberOfGroups - 1, useRatios = TRUE){
+#   if (blobLength %in% c(5,9)){
+#     return(data.frame(what = determineBlobTypeRaw(blobLength), minimumSize = 1))
+#   }
+#   if (preferNumberOfGroups){
+#     if ((blobLength %% numberOfGroups) == 0){
+#       return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
+#                         minimumSize = numberOfGroups))
+#     } else {
+#       if ((blobLength %% minimumNumber) != 0){
+#         if (useRatios){
+#           if ((blobLength %% ratioNumberOfGroups) == 0){
+#             return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
+#                               minimumSize = ratioNumberOfGroups))
+#           }
+#         }
+#         warning("Possibly invalid blob type")
+#       }
+#       return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
+#                         minimumSize = minimumNumber))
+#     }
+#   } else {
+#     if ((blobLength %% minimumNumber) == 0){
+#       return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
+#                         minimumSize = minimumNumber))
+#     } else {
+#       if ((blobLength %% numberOfGroups) != 0){  # unsure if this is needed/good
+#         if (useRatios){
+#           if ((blobLength %% ratioNumberOfGroups) == 0){
+#             return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
+#                               minimumSize = ratioNumberOfGroups))
+#           }
+#         }
+#         warning("Possibly invalid blob type!")
+#       }
+#       return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
+#                         minimumSize = numberOfGroups))
+#     }
+#   } 
+# }
 
 
 determineBlobType(5, numberOfGroups = 4, minimumNumber = 11)
@@ -104,7 +106,7 @@ determineBlobType(9, numberOfGroups = 4, minimumNumber = 11)
 determineBlobType(20, numberOfGroups = 4, minimumNumber = 11)
 determineBlobType(99, numberOfGroups = 4, minimumNumber = 11)
 determineBlobType(55, numberOfGroups = 4, minimumNumber = 11)
-determineBlobType(21, numberOfGroups = 4, minimumNumber = 11)
+determineBlobType(21, numberOfGroups = 4, minimumNumber = 11, useRatios = T)
 determineBlobType(18, numberOfGroups = 4, minimumNumber = 11, ratioNumberOfGroups = 2)
 
 determineBlobType(5, numberOfGroups = 4, minimumNumber = 11, preferNumberOfGroups = FALSE)

@@ -294,6 +294,165 @@ determineRawTypes <- function(df, allowSpecials = TRUE){
   return(rawType)
 }
 
+#' detemines which columns in a database table are of the blob (raw) type
+#' 
+#' @param db database access 'handle'
+#' @param tableName used to pass on the name of the table containing the data
+#' @return a datafrane with two columns: name = columname) and type  (which
+#'  should always be 'blob')
+#'  
+#' @note this is essentially a wrap around function for db_columnInfo
+db_getBlobs <- function(db, tableName = tableName()){
+  return(dbAccess::db_columnInfo(db = db, tableName = tableName) %>%
+           dplyr::filter(type == "blob"))
+}
+
+#' detemines which columns in a table are of the blob (raw) type
+#' 
+#' @param theTable the table containing the data
+#' @return a datafrane with two columns: name = columname) and type  (which
+#'  should always be 'blob')
+getBlobs <- function(theTable){
+  temp <- purrr::map_chr(theTable,~class(.x)[1])
+  return(data.frame(name = names(temp), type = unname(temp)) %>%
+           dplyr::filter(type == "blob"))
+}
+
+#' determines the length of the blob (raw) type columns in a data.frame from a
+#'  table (possibly from a database) 
+#'  
+#' @param blobDF the result from either db_getBlobs or getBlobs
+#' @param theTable the table to which blobDF refers, so either the table from 
+#'  the database, which was used for db_getBlobs or the table (dataframe) used
+#'  for getBlobs
+#' @return blobDF with a single column (named 'length') added which contains
+#'  the length (number of bytes) of each blob column 
+determineBlobLengths <- function(blobDF, theTable){
+  blobDF$length <- unlist(lapply(1:nrow(blobDF),
+                        function(x){blobLength(theTable[,blobDF$name[x]])}))
+  return(blobDF)
+}
+
+#' function which converts the blob length to the appropiate (R) datatype
+#' 
+#' @param blobLength currently only 5 (integer) & 9 (numeric) are supported.
+#'  Anything else will result in NA
+#' @return a string (either "integer" or "numeric") or NA
+#' 
+#' @note internal function, but exposed to package users to enable rewriting/
+#'  extensions
+determineBlobTypeRaw <- function(blobLength){
+  return(
+    unlist(
+      lapply(blobLength, function(x){
+        switch(toString(x),
+               "5"="integer",
+               "9"="numeric",
+               NA)
+      }
+      )
+    )
+  )
+}
+
+#' function that attempts to assign a type to the blob (raw) length  as found
+#'  by dtermineBlobLengths
+#'  
+#' @note this function works only with single numbers and is meant to be used
+#'  primarily by the function blobEstimateTypes
+#'  
+#' @param blobLength the actual length (number of bytes) of the element we wish
+#'  to assign a type to
+#' @param minimumNumber this defines the minimum number of columns a
+#'  blob/raw type column should be split into. In TMT10plex experiments, the
+#'  minimumNumber will usually be 10, becauseyou have 10 channels/abundances
+#' @param numberOfGroups this defines how many 'groups' are present in the data.
+#'  Taking Abundances as an example: Proteone Discoverer has both the original
+#'  columns (say Abundances_1 through Abundances_2), but also columns where the
+#'  abundances, that 'belong' together, are eg averaged or some other
+#'  (statistical) measure  is calculated over a number of columns. You may have
+#'  eg 10 'Abundance channels' which are 5 samples total, each in duplo. This
+#'  means that some columns in the resulting table will need to be split in 10
+#'  different columns (the original 'Abundances') while 'grouped' columns should
+#'  be split into 5 different columns (eg the calculated means or variations of
+#'  the 'abundances' columns). Note that although not enforced by the code, the
+#'  numberOfGroups should always be equal or less than the  minimumNumber
+#'  parameter. Default value = minimumNumber
+#' @param ratioNumberOfGroups when ratios between groups are calculated we get
+#'  columns (ratio columns) that need to be split into numberOfGroups - 1
+#'  (which is the efault value)
+#' @note this function does not deal properly with specials, their types/
+#'  translations are resolved in a different way
+#' @note there are two ways to see potential problems with the type assignments:
+#'  the what column may contain NA values or there might be a 'R-style' warning
+#'  (possibly invalid blob type!)
+#' @note
+determineBlobType <- function(blobLength, minimumNumber,
+                              numberOfGroups = minimumNumber,
+                              # preferNumberOfGroups = TRUE,  # consider removing
+                              ratioNumberOfGroups = numberOfGroups - 1#,
+                              #$ useRatios = TRUE){   # consider removing
+                              ){
+  if (blobLength %in% c(5,9)){
+    return(data.frame(what = determineBlobTypeRaw(blobLength), minimumSize = 1))
+  }
+  # if (preferNumberOfGroups){
+  #   if ((blobLength %% numberOfGroups) == 0){
+  #     return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
+  #                       minimumSize = numberOfGroups))
+  #   } else {
+  #     if ((blobLength %% minimumNumber) != 0){
+  #       if (useRatios){
+  #         if ((blobLength %% ratioNumberOfGroups) == 0){
+  #           return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
+  #                             minimumSize = ratioNumberOfGroups))
+  #         }
+  #       }
+  #       warning("Possibly invalid blob type")
+  #     }
+  #     return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
+  #                       minimumSize = minimumNumber))
+  #   }
+#  } else {
+    if ((blobLength %% minimumNumber) == 0){
+      return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
+                        minimumSize = minimumNumber))
+    } else {
+      if ((blobLength %% numberOfGroups) != 0){  # unsure if this is needed/good
+#        if (useRatios){
+          if ((blobLength %% ratioNumberOfGroups) == 0){
+            return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
+                              minimumSize = ratioNumberOfGroups))
+          }
+#        }
+        warning("Possibly invalid blob type!")
+      }
+      return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
+                        minimumSize = numberOfGroups))
+    }
+#  } 
+}
+
+
+
+
+#' attempts to determine the length (in bytes) of the individual elements of a
+#'  blob-type column of a data.frame. It should (!) return an integer value of
+#'  course (as all elements are supposed to have the same length). Also: if all
+#'  elements of the column are NA, the the result will be NaN
+#'  
+#' @param blobList one column data.frame (or list) of blob (raw) element type
+#'  elements
+#' @return the length of the elements in the data.frame (or list) column. Again:
+#'  this should be an integer
+blobLength <- function(blobList){
+  return(mean(unlist(lapply((lapply(blobList,length)),
+                            function(x){ifelse(x==0,NA,x)})),
+              na.rm = TRUE))
+}
+
+
+
 #' df_transform_raws(): converts raw columns in a data.frame to the correct
 #' data types
 #'
