@@ -386,7 +386,14 @@ determineBlobTypeRaw <- function(blobLength){
 #' @note there are two ways to see potential problems with the type assignments:
 #'  the what column may contain NA values or there might be a 'R-style' warning
 #'  (possibly invalid blob type!)
-#' @note
+#' @note an example of use of this function: 
+#'  a column from a TMT11 plex analysis with 4 groups (and thus 3 ratios):
+#'  determineBlobType(55, minimumNumber = 11, numberOfGroups = 4,
+#'   ratioNumberOfGroups = 3)
+#'  determineBlobType(50, minimumNumber = 11, numberOfGroups = 4,
+#'   ratioNumberOfGroups = 3)
+#'  The first code will give what = integer and minimumSize = 11, the second
+#'   code 
 determineBlobType <- function(blobLength, minimumNumber,
                               numberOfGroups = minimumNumber,
                               # preferNumberOfGroups = TRUE,  # consider removing
