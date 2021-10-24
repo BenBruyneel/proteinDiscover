@@ -152,7 +152,8 @@ determineBlobLengths(blobDF = db_getBlobs(db = tkodb, tableName = "TargetProtein
 
 determineBlobTypes <- function(blobDF, theTable, minimumNumber,
                                numberOfGroups = minimumNumber,
-                               ratioNumberOfGroups = numberOfGroups - 1){
+                               ratioNumberOfGroups = numberOfGroups - 1,
+                               specials = TRUE){
   blobDF <- determineBlobLengths(blobDF = blobDF, theTable = theTable)
   blobDF <- bind_cols(blobDF, blobEstimateTypes(blobLengths = blobDF$length,
                                                 minimumNumber = minimumNumber,
@@ -161,5 +162,6 @@ determineBlobTypes <- function(blobDF, theTable, minimumNumber,
   return(blobDF)
 }
 
-determineBlobTypes(blobDF = db_getBlobs(db = tkodb, tableName = "TargetProteins"), theTable = tkoProt,
+# blobDF = db_getBlobs(db = tkodb, tableName = "TargetProteins"), 
+determineBlobTypes(theTable = tkoProt,
                    minimumNumber = 1, numberOfGroups = 1,ratioNumberOfGroups = 1)

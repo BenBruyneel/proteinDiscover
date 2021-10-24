@@ -318,6 +318,21 @@ getBlobs <- function(theTable){
            dplyr::filter(type == "blob"))
 }
 
+#' attempts to determine the length (in bytes) of the individual elements of a
+#'  blob-type column of a data.frame. It should (!) return an integer value of
+#'  course (as all elements are supposed to have the same length). Also: if all
+#'  elements of the column are NA, the the result will be NaN
+#'  
+#' @param blobList one column data.frame (or list) of blob (raw) element type
+#'  elements
+#' @return the length of the elements in the data.frame (or list) column. Again:
+#'  this should be an integer
+blobLength <- function(blobList){
+  return(mean(unlist(lapply((lapply(blobList,length)),
+                            function(x){ifelse(x==0,NA,x)})),
+              na.rm = TRUE))
+}
+
 #' determines the length of the blob (raw) type columns in a data.frame from a
 #'  table (possibly from a database) 
 #'  
@@ -381,11 +396,13 @@ determineBlobTypeRaw <- function(blobLength){
 #' @param ratioNumberOfGroups when ratios between groups are calculated we get
 #'  columns (ratio columns) that need to be split into numberOfGroups - 1
 #'  (which is the efault value)
+#' @return a single row data.frame with columns what (type) and minimumSize
+#'  (number of variables in the blob)
+#'  
 #' @note this function does not deal properly with specials, their types/
 #'  translations are resolved in a different way
 #' @note there are two ways to see potential problems with the type assignments:
-#'  the what column may contain NA values or there might be a 'R-style' warning
-#'  (possibly invalid blob type!)
+#'  the columns may contain NA values
 #' @note an example of use of this function: 
 #'  a column from a TMT11 plex analysis with 4 groups (and thus 3 ratios):
 determineBlobType <- function(blobLength, minimumNumber,
@@ -431,25 +448,118 @@ determineBlobType <- function(blobLength, minimumNumber,
   return(result)
 }
 
-
-
-
-#' attempts to determine the length (in bytes) of the individual elements of a
-#'  blob-type column of a data.frame. It should (!) return an integer value of
-#'  course (as all elements are supposed to have the same length). Also: if all
-#'  elements of the column are NA, the the result will be NaN
+#' function that attempts to assign a type to the blob (raw) lengths as found
+#'  by dtermineBlobLengths
 #'  
-#' @param blobList one column data.frame (or list) of blob (raw) element type
-#'  elements
-#' @return the length of the elements in the data.frame (or list) column. Again:
-#'  this should be an integer
-blobLength <- function(blobList){
-  return(mean(unlist(lapply((lapply(blobList,length)),
-                            function(x){ifelse(x==0,NA,x)})),
-              na.rm = TRUE))
+#' @note this function works with single numbers and multiple numbers
+#'  
+#' @param blobLengths the actual lengths (number of bytes) of the elements we
+#'  wish to assign types to. Can be 1 or more lengths
+#' @param minimumNumber this defines the minimum number of columns a
+#'  blob/raw type column should be split into. In TMT10plex experiments, the
+#'  minimumNumber will usually be 10, becauseyou have 10 channels/abundances
+#' @param numberOfGroups this defines how many 'groups' are present in the data.
+#'  Taking Abundances as an example: Proteone Discoverer has both the original
+#'  columns (say Abundances_1 through Abundances_2), but also columns where the
+#'  abundances, that 'belong' together, are eg averaged or some other
+#'  (statistical) measure  is calculated over a number of columns. You may have
+#'  eg 10 'Abundance channels' which are 5 samples total, each in duplo. This
+#'  means that some columns in the resulting table will need to be split in 10
+#'  different columns (the original 'Abundances') while 'grouped' columns should
+#'  be split into 5 different columns (eg the calculated means or variations of
+#'  the 'abundances' columns). Note that although not enforced by the code, the
+#'  numberOfGroups should always be equal or less than the  minimumNumber
+#'  parameter. Default value = minimumNumber
+#' @param ratioNumberOfGroups when ratios between groups are calculated we get
+#'  columns (ratio columns) that need to be split into numberOfGroups - 1
+#'  (which is the efault value)
+#' @return a data.frame with columns what (type) and minimumSize (number of
+#'  variables in the blob)  
+#'  
+#' @note this function does not deal properly with specials, their types/
+#'  translations are resolved in a different way
+#' @note there are two ways to see potential problems with the type assignments:
+#'  the columns may contain NA values
+#' @export  
+blobEstimateTypes <- function(blobLengths, minimumNumber,
+                              numberOfGroups = minimumNumber,
+                              ratioNumberOfGroups = numberOfGroups - 1){
+  return(
+    bind_rows(
+      lapply(blobLengths, function(x){determineBlobType(blobLength = x,
+                                                        numberOfGroups = numberOfGroups,
+                                                        minimumNumber = minimumNumber,
+                                                        ratioNumberOfGroups = ratioNumberOfGroups)})
+    )
+  )
 }
 
-
+#' function that attempts to assign types and sizes to the blob type columns
+#'  in a table. The result from this function can be used in the dfTransformRaws 
+#'  function
+#' 
+#' @param theTable a data.frame with blob Columns (if no blobColumns are
+#'  present, then NA is returned)
+#' @param minimumNumber this defines the minimum number of columns a
+#'  blob/raw type column should be split into. In TMT10plex experiments, the
+#'  minimumNumber will usually be 10, becauseyou have 10 channels/abundances
+#' @param numberOfGroups this defines how many 'groups' are present in the data.
+#'  Taking Abundances as an example: Proteone Discoverer has both the original
+#'  columns (say Abundances_1 through Abundances_2), but also columns where the
+#'  abundances, that 'belong' together, are eg averaged or some other
+#'  (statistical) measure  is calculated over a number of columns. You may have
+#'  eg 10 'Abundance channels' which are 5 samples total, each in duplo. This
+#'  means that some columns in the resulting table will need to be split in 10
+#'  different columns (the original 'Abundances') while 'grouped' columns should
+#'  be split into 5 different columns (eg the calculated means or variations of
+#'  the 'abundances' columns). Note that although not enforced by the code, the
+#'  numberOfGroups should always be equal or less than the  minimumNumber
+#'  parameter. Default value = minimumNumber
+#' @param ratioNumberOfGroups when ratios between groups are calculated we get
+#'  columns (ratio columns) that need to be split into numberOfGroups - 1
+#'  (which is the efault value)
+#' @param blobDF essentially the result from either getBlobs or db_getBlobs,
+#'  if NA then it will be generated by the getBlobs function with theTable as
+#'  an argument
+#' @param specials default is TRUE, means that specials will be taken care of
+#' @return a data.frame with the name of the blob columns, their lengths,
+#'  what (type) and minimumSize (number of variables in the blob)
+#'  
+#' @note this function does not deal properly with specials, their types/
+#'  translations are resolved in a different way
+#' @note there are two ways to see potential problems with the type assignments:
+#'  the columns may contain NA values
+determineBlobTypes <- function(theTable, minimumNumber,
+                               numberOfGroups = minimumNumber,
+                               ratioNumberOfGroups = numberOfGroups - 1,
+                               blobDF = NA, specials = TRUE){
+  if (identical(blobDF, NA)){
+    blobDF <- getBlobs(theTable = theTable)
+  }
+  if (nrow(blobDF) == 0){
+    return(NA) # no blobs
+  }
+  blobDF <- determineBlobLengths(blobDF = blobDF, theTable = theTable)
+  blobDF <- bind_cols(blobDF, blobEstimateTypes(blobLengths = blobDF$length,
+                                                minimumNumber = minimumNumber,
+                                                numberOfGroups = numberOfGroups,
+                                     ratioNumberOfGroups = ratioNumberOfGroups))
+  if (specials){
+    blobSpecials <- columnSpecials()
+    if (sum(grepl(blobDF$name, pattern = "Aspect")) > 0){
+      for (counter in 1:nrow(blobDF)){
+        if (blobDF$name[counter] %in% blobSpecials$names){
+          blobDF$what[counter] <- "special"
+          blobDF$minimumSize[counter] <- 
+            blobDF$length[counter] %/%
+            (blobSpecials %>%
+               dplyr::filter(names == blobDF$name[counter]))$size
+        }
+      }
+    }
+  }
+  return(blobDF)
+}
 
 #' df_transform_raws(): converts raw columns in a data.frame to the correct
 #' data types
