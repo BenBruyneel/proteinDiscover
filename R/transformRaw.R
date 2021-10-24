@@ -113,24 +113,6 @@ columnSpecials <- function(){
 #'        the name 'columnName'+"_"+number, eg column1 becomes:
 #'        column1_1, column1_2, etc
 convertRawColumn <- function(columnVector, blobDF){
-  # if (columnName %in% columnSpecials$names){
-  #   if (allowSpecials){
-  #     # find length blob specials
-  #     specialSize <- max(unlist(lapply(columnVector, length)))
-  #     # divide by special size, 2 if it is boolean raw
-  #     specialSize <- specialSize/
-  #       columnSpecials[columnSpecials$names == columnName,]$size
-  #     converted <- unlist(lapply(columnVector,
-  #                                function(x){
-  #                                  convertRawSpecial(x,
-  #                                                    specialSize = specialSize)}))
-  #     numberColumns <- specialSize
-  #   } else {
-  #     converted <- columnVector
-  #     numberColumns <- 1
-  #   }
-  # } else {
-    # if (!identical(forceBlob,NA)){
   if (colnames(columnVector)[1] %in% blobDF$name){
     blobDF <- blobDF[blobDF$name == colnames(columnVector)[1],]
     if (is.na(blobDF$what[1])){
