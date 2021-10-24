@@ -342,17 +342,17 @@ determineBlobLengths <- function(blobDF, theTable){
 #' @note internal function, but exposed to package users to enable rewriting/
 #'  extensions
 determineBlobTypeRaw <- function(blobLength){
-  return(
-    unlist(
-      lapply(blobLength, function(x){
-        switch(toString(x),
-               "5"="integer",
-               "9"="numeric",
-               NA)
-      }
-      )
-    )
-  )
+  return(unlist(lapply(blobLength, function(x){
+                                              if (x %% 9 == 0){
+                                                return("numeric")
+                                              } else {
+                                                if (x %% 5 == 0){
+                                                  return("integer")
+                                                } else {
+                                                  return(NA)
+                                                }
+                                              }
+                                            })))
 }
 
 #' function that attempts to assign a type to the blob (raw) length  as found
@@ -388,56 +388,47 @@ determineBlobTypeRaw <- function(blobLength){
 #'  (possibly invalid blob type!)
 #' @note an example of use of this function: 
 #'  a column from a TMT11 plex analysis with 4 groups (and thus 3 ratios):
-#'  determineBlobType(55, minimumNumber = 11, numberOfGroups = 4,
-#'   ratioNumberOfGroups = 3)
-#'  determineBlobType(50, minimumNumber = 11, numberOfGroups = 4,
-#'   ratioNumberOfGroups = 3)
-#'  The first code will give what = integer and minimumSize = 11, the second
-#'   code 
 determineBlobType <- function(blobLength, minimumNumber,
                               numberOfGroups = minimumNumber,
-                              # preferNumberOfGroups = TRUE,  # consider removing
-                              ratioNumberOfGroups = numberOfGroups - 1#,
-                              #$ useRatios = TRUE){   # consider removing
-                              ){
+                              ratioNumberOfGroups = numberOfGroups - 1){
   if (blobLength %in% c(5,9)){
     return(data.frame(what = determineBlobTypeRaw(blobLength), minimumSize = 1))
   }
-  # if (preferNumberOfGroups){
-  #   if ((blobLength %% numberOfGroups) == 0){
-  #     return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
-  #                       minimumSize = numberOfGroups))
-  #   } else {
-  #     if ((blobLength %% minimumNumber) != 0){
-  #       if (useRatios){
-  #         if ((blobLength %% ratioNumberOfGroups) == 0){
-  #           return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
-  #                             minimumSize = ratioNumberOfGroups))
-  #         }
-  #       }
-  #       warning("Possibly invalid blob type")
-  #     }
-  #     return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
-  #                       minimumSize = minimumNumber))
-  #   }
-#  } else {
-    if ((blobLength %% minimumNumber) == 0){
-      return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
-                        minimumSize = minimumNumber))
+  if ((blobLength %% minimumNumber) == 0){
+    result <- data.frame(
+        what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
+        minimumSize = minimumNumber)
+  } else {
+    if ((blobLength %% numberOfGroups) == 0){
+      result <- data.frame(
+        what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
+        minimumSize = numberOfGroups)
     } else {
-      if ((blobLength %% numberOfGroups) != 0){  # unsure if this is needed/good
-#        if (useRatios){
-          if ((blobLength %% ratioNumberOfGroups) == 0){
-            return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
-                              minimumSize = ratioNumberOfGroups))
-          }
-#        }
-        warning("Possibly invalid blob type!")
+      if ((blobLength %% ratioNumberOfGroups) == 0){
+        result <- data.frame(
+  what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
+  minimumSize = ratioNumberOfGroups)
+      } else {
+        result <- data.frame(what = NA, minimumSize = NA)
       }
-      return(data.frame(what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
-                        minimumSize = numberOfGroups))
     }
-#  } 
+  }
+  if (identical(result$what[1],NA)){
+    # this section is problematic with eg blobLengths of eg 45,
+    # since this is integer divisble by both 5 & 9
+    if (blobLength %% 9 == 0){
+      return(data.frame(what = "numeric",
+                        minimumSize = blobLength %/% 9))
+    } else {
+      if (blobLength %% 5 == 0){
+        return(data.frame(what = "integer",
+                          minimumSize = blobLength %/% 5))
+      } else {
+        return(data.frame(what = NA, minimumSize = NA))
+      }
+    }
+  }
+  return(result)
 }
 
 

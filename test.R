@@ -117,16 +117,14 @@ determineBlobType(55, numberOfGroups = 4, minimumNumber = 11, preferNumberOfGrou
 determineBlobType(21, numberOfGroups = 4, minimumNumber = 11, preferNumberOfGroups = FALSE)
 
 blobEstimateTypes <- function(blobLengths, minimumNumber,
-                              numberOfGroups = minimumNumber, preferNumberOfGroups = TRUE,
-                              ratioNumberOfGroups = numberOfGroups - 1, useRatios = TRUE){
+                              numberOfGroups = minimumNumber,
+                              ratioNumberOfGroups = numberOfGroups - 1){
   return(
     bind_rows(
       lapply(blobLengths, function(x){determineBlobType(blobLength = x,
                                                         numberOfGroups = numberOfGroups,
                                                         minimumNumber = minimumNumber,
-                                                        preferNumberOfGroups = preferNumberOfGroups,
-                                                        ratioNumberOfGroups = ratioNumberOfGroups,
-                                                        useRatios = useRatios)})
+                                                        ratioNumberOfGroups = ratioNumberOfGroups)})
     )
   )
 }
@@ -136,27 +134,32 @@ blobEstimateTypes <- function(blobLengths, minimumNumber,
 
 
 
-blobEstimateTypes(c(5,12,9,18,27), numberOfGroups = 2, minimumNumber = 3, useRatios = FALSE)
+blobEstimateTypes(c(5,12,9,18,27), numberOfGroups = 4, minimumNumber = 5)
 
 blobEstimateTypes(frcblb$length, numberOfGroups = 4, minimumNumber = 11)
+blobEstimateTypes((frcblb %>% filter(!grepl(name, pattern = "Aspect")))$length, numberOfGroups = 4, minimumNumber = 11)
 
 blobEstimateTypes(blobLengths = frcblb$length, numberOfGroups = 4, minimumNumber = 11)
 
 bind_cols(frcblb,blobEstimateTypes(blobLengths = frcblb$length, numberOfGroups = 4, minimumNumber = 11))
 
-determineBlobLengths(columnInfo = db_getBlobs(db = tkodb, tableName = "TargetProteins") %>%
+frcblb2 <- frcblb
+frcblb2[12:17,]$length <- c(99,55,99,36,20,5)
+bind_cols(frcblb2,blobEstimateTypes(blobLengths = frcblb2$length, numberOfGroups = 4, minimumNumber = 11))
+
+determineBlobLengths(blobDF = db_getBlobs(db = tkodb, tableName = "TargetProteins") %>%
                        filter(!grepl(name, pattern = "Aspect")), theTable = tkoProt)
 
-determineBlobTypes <- function(columnInfo, theTable, minimumNumber,
-                               numberOfGroups = minimumNumber, preferNumberOfGroups = TRUE,
-                               ratioNumberOfGroups = numberOfGroups - 1, useRatios = TRUE){
-  columnInfo <- determineBlobLengths(columnInfo = columnInfo, theTable = theTable)
-  columnInfo <- bind_cols(columnInfo, blobEstimateTypes(blobLengths = columnInfo$length,
-                                                        minimumNumber = minimumNumber,
-                                                        numberOfGroups = numberOfGroups, preferNumberOfGroups = preferNumberOfGroups,
-                                                        ratioNumberOfGroups = ratioNumberOfGroups, useRatios = useRatios))
-  return(columnInfo)
+determineBlobTypes <- function(blobDF, theTable, minimumNumber,
+                               numberOfGroups = minimumNumber,
+                               ratioNumberOfGroups = numberOfGroups - 1){
+  blobDF <- determineBlobLengths(blobDF = blobDF, theTable = theTable)
+  blobDF <- bind_cols(blobDF, blobEstimateTypes(blobLengths = blobDF$length,
+                                                minimumNumber = minimumNumber,
+                                                numberOfGroups = numberOfGroups,
+                                                ratioNumberOfGroups = ratioNumberOfGroups))
+  return(blobDF)
 }
 
-determineBlobTypes(columnInfo = db_getBlobs(db = tkodb, tableName = "TargetProteins"), theTable = tkoProt,
+determineBlobTypes(blobDF = db_getBlobs(db = tkodb, tableName = "TargetProteins"), theTable = tkoProt,
                    minimumNumber = 1, numberOfGroups = 1,ratioNumberOfGroups = 1)
