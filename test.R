@@ -165,3 +165,12 @@ determineBlobTypes <- function(blobDF, theTable, minimumNumber,
 # blobDF = db_getBlobs(db = tkodb, tableName = "TargetProteins"), 
 determineBlobTypes(theTable = tkoProt,
                    minimumNumber = 1, numberOfGroups = 1,ratioNumberOfGroups = 1)
+
+tkol <- determineBlobTypes(theTable = tkoProt,
+                           minimumNumber = 1, numberOfGroups = 1,ratioNumberOfGroups = 1)
+
+tkoProtTranslated <- tkoProt %>% dfTransformRaws(blobDF = tkol)
+tkoProtTranslated2 <- tkoProt %>% dfTransformRaws()
+tkoProtTranslated3 <- tkoProt %>% dfTransformRaws(specials = FALSE)
+
+determineRawTypes(df = tkoProt[,colnames(tkoProt) %in% getBlobs(tkoProt)$name])

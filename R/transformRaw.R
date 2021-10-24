@@ -99,72 +99,64 @@ columnSpecials <- function(){
 #' one or more columns containing the integer/numeric/... counterparts
 #'
 #' @param columnVector data.frame column, eg df[,1] or df$column1
-#' @param what         "integer" or "numeric" (can only be one of these two!)
-#' @param columnName   character string, can be new name, can be the original
-#'                     column's name. Must be suitable name
-#' @param minimumSize  A number (integer) indicating how many values are
-#'                     in the rawVectors that make up the columnVector.
-#'                     Default = 1. This catches potential rawVectors
-#'                     that are empty/NA
-#' @param forceBlob    must be data.frame with 3 columns: name (columnName),
-#'                     what (type)& minimumSize (number of values in a cell)
+#' @param blobDF       must be data.frame with 3 columns: name (columnName),
+#'                     what (type) & minimumSize (number of values in a cell)
 #'                     Default = NA. forceBlob exists to override automatic
 #'                     conversion which has a potential for mistakes when
 #'                     determining the type of a rawVector in a columnVector.
 #'                     If 'what' in the forceBlob data.frame = NA, then the
 #'                     columnVector will not be converted, but returned as it
 #'                     is!
-#' @param allowSpecials  allow for the 'special' cpnversions of columns with
-#'                       the names specified om the specials data.frame.
-#'                       Default = TRUE. Note: it is best to use forceBlob
-#'                       with 'what' set to NA to prevent conversion problems
 #' @return a data.frame (!) with one or more of the converted (or not) columns
 #' @note: if a columnVector contains multiple values per 'cell' then
 #'        the column will get split into an equal number of columns with
 #'        the name 'columnName'+"_"+number, eg column1 becomes:
 #'        column1_1, column1_2, etc
-convertRawColumn <- function(columnVector, what, columnName, minimumSize = 1,
-                             forceBlob = NA, allowSpecials = TRUE){
-  if (columnName %in% columnSpecials$names){
-    if (allowSpecials){
-      # find length blob specials
-      specialSize <- max(unlist(lapply(columnVector, length)))
-      # divide by special size, 2 if it is boolean raw
-      specialSize <- specialSize/
-        columnSpecials[columnSpecials$names == columnName,]$size
-      converted <- unlist(lapply(columnVector,
-                                 function(x){
-                                   convertRawSpecial(x,
-                                                     specialSize = specialSize)}))
-      numberColumns <- specialSize
-    } else {
-      converted <- columnVector
-      numberColumns <- 1
-    }
-  } else {
-    if (!identical(forceBlob,NA)){
-      if (columnName %in% forceBlob$name){
-        what <- forceBlob[forceBlob$name == columnName,]$what
-        if (is.na(what)){
-          converted <- data.frame(tempName = columnVector)
-          colnames(converted) <- columnName
-          return(columnVector) # no conversion is (to be) performed!
-        }
-        minimumSize <- forceBlob[forceBlob$name == columnName,]$minimumSize
-      }
-    }
-    if (what == "integer"){
-      converted <- unlist(lapply(columnVector, function(x){convertRawInteger(x, minimumSize = minimumSize)}))
-    } else {
-      if (what == "numeric"){
-        converted <- unlist(lapply(columnVector,function(x){convertRawNumeric(x, minimumSize = minimumSize)}))
-      }
-    }
-    numberColumns <- minimumSize  #length(converted) %/% length(columnVect
+convertRawColumn <- function(columnVector, blobDF){
+  # if (columnName %in% columnSpecials$names){
+  #   if (allowSpecials){
+  #     # find length blob specials
+  #     specialSize <- max(unlist(lapply(columnVector, length)))
+  #     # divide by special size, 2 if it is boolean raw
+  #     specialSize <- specialSize/
+  #       columnSpecials[columnSpecials$names == columnName,]$size
+  #     converted <- unlist(lapply(columnVector,
+  #                                function(x){
+  #                                  convertRawSpecial(x,
+  #                                                    specialSize = specialSize)}))
+  #     numberColumns <- specialSize
+  #   } else {
+  #     converted <- columnVector
+  #     numberColumns <- 1
+  #   }
+  # } else {
+    # if (!identical(forceBlob,NA)){
+  if (colnames(columnVector)[1] %in% blobDF$name){
+    blobDF <- blobDF[blobDF$name == colnames(columnVector)[1],]
+    if (is.na(blobDF$what[1])){
+      converted <- data.frame(tempName = columnVector)
+      colnames(converted) <- columnName
+      return(columnVector) # no conversion is (to be) performed!
+     } 
   }
+  if (blobDF$what[1] == "integer"){
+    converted <- unlist(lapply(columnVector[,1], function(x){convertRawInteger(x, minimumSize = blobDF$minimumSize[1])}))
+  } else {
+    if (blobDF$what[1] == "numeric"){
+      converted <- unlist(lapply(columnVector[,1],function(x){convertRawNumeric(x, minimumSize = blobDF$minimumSize[1])}))
+    } else {
+      if (blobDF$what[1] == "special"){
+        converted <- unlist(lapply(columnVector[,1],
+                                   function(x){
+                                     convertRawSpecial(x,
+                                         specialSize = blobDF$minimumSize[1])}))
+      }
+    }
+  }
+  numberColumns <- blobDF$minimumSize[1]
   # numberColumns <- minimumSize  #length(converted) %/% length(columnVector)
   tempdf <- data.frame(matrix(converted, ncol = numberColumns, byrow = TRUE))
-  colnames(tempdf) <- paste(columnName,"_",1:numberColumns,sep = "")
+  colnames(tempdf) <- paste(blobDF$name[1],"_",1:numberColumns,sep = "")
   return(tempdf)
   if (numberColumns > 1){
     tempdf <- data.frame()
@@ -176,122 +168,14 @@ convertRawColumn <- function(columnVector, what, columnName, minimumSize = 1,
       } else {
         tempdf <- dplyr::bind_cols(tempdf, data.frame(tempName = converted[mask]))
       }
-      colnames(tempdf)[counter] <- paste(c(columnName,"_",toString(counter)),collapse = "")
+      colnames(tempdf)[counter] <- paste(c(blobDF$name[1],"_",toString(counter)),collapse = "")
     }
     return(tempdf)
   } else {
     converted <- data.frame(tempName = converted)
-    colnames(converted) <- columnName
+    colnames(converted) <- blobDF$name[1]
     return(converted)
   }
-}
-
-#' Determine the type of raw vector a rawVector is
-#'
-#' @param rawVector  A vector of type 'raw' (blob)
-#' @param number     boolean to specifiy if the return value should be
-#'                   be character (FALSE) or numeric (TRUE). Default = TRUE
-#' @return character string ("integer", "numeric") or a numeric value (5 or 9)
-#' @note this method has a weakness, if raw vector length = 45 or similar,
-#'       then the type returned will be integer, even though it may very well
-#'       be numeric  45 %% 5 = 0. but 45 %% 9 = 0 too!
-whichRaw <- function(rawVector, number = FALSE){
-  if (identical(rawVector,NA) | identical(rawVector,NULL)){
-    return(NA)
-  }
-  if (((length(rawVector) %% 5) == 0)){
-    return(ifelse(number, 5, "integer"))
-  } else {
-    if (((length(rawVector) %% 9) == 0)){
-      return(ifelse(number, 9, "numeric"))
-    } else {
-      return(ifelse(number, as.numeric(NA), as.character(NA)))
-    }
-  }
-}
-
-#' Determine the type of a list of raw vectors
-#'
-#' @param blobList A list of raw vectors, usually the column of a data.frame
-#' @param naValue  A default value to be used, when it the type cannot be
-#'                 determined (when a column contains only NA's)
-#' @return a list of (type = , number = ) where type is the type of raw vector
-#'         and number is the number of items per cell
-#' @note Some of the data in the tables that come out of the database system
-#' in # proteome discoverer are in the <blob> raw Vector format. So some
-#' columns are lists of raw Vectors. To convert them, one has to know the type
-#' of raw vector (integer/numeric). Because some elements in the 'blob' list
-#' are NA, this function seeks the first non-NA element and tries to determine
-#' it's type. If it the column contains only NA's then the naValue will be
-#' returned (default = NA). This was included to force a certain type
-#' even if the column (temporarily?) contains no data
-#' @note only properly works with "integer" or "numeric" raw vectors
-whichRawList <- function(blobList, naValue = NA){
-  anyValidBlobs <- sum(!is.na(blobList))
-  if (anyValidBlobs < 1){
-    theType <- naValue
-  } else {
-    firstBlob <- blobList[[which(!is.na(blobList))[1]]]
-    theType <- whichRaw(firstBlob)
-  }
-  numberValues <- ifelse(theType == "integer",length(firstBlob)/5,
-                         ifelse(theType == "numeric", length(firstBlob)/9,
-                                length(firstBlob)))
-                                # unknowns will give length of the blob itself
-  return(list(type = theType, number = numberValues))
-}
-
-#' Determine the type of a list of raw vectors that is a columnSpecial
-#'
-#' @param blobList A list of raw vectors, usually the column of a data.frame
-#' @param naValue  A default value to be used, when it the type cannot be
-#'                 determined (when a column contains only NA's)
-#' @param specialName name of the column which is a special
-#' @return a list of (type = , number = ) where type is the type of raw vector
-#'         and number is the number of items per cell
-#' @note the type is always either NA or "special". This function is actually
-#' more for determining the number of items per cell, which is a list
-#' of boolean values
-whichRawListSpecial <- function(blobList, naValue = NA, specialName){
-  anyValidBlobs <- sum(!is.na(blobList))
-  if (anyValidBlobs < 1){
-    theType = naValue
-    numberValues <- 0
-  } else {
-    firstBlob <- blobList[[which(!is.na(blobList))[1]]]
-    theType <- "special"
-    numberValues <-
-      length(firstBlob)/
-              columnSpecials[columnSpecials$names == specialName,]$size
-      # unknowns will give length of the blob itself
-  }
-  return(list(type = theType, number = numberValues))
-}
-
-
-#' automatically attempts determines the types (numeric or integer) of the
-#' raw vector columns in a data.frame
-#'
-#' @param df             data.frame containing ONLY blob/rawVector columns
-#' @param allowSpecials  allow for the 'special' conversions of columns with
-#'                       the names specified om the specials data.frame.
-#'                       Default = TRUE. Note: it is best to force the type
-#'                       if this is set to FALSE
-#' @return a list of the raw types
-determineRawTypes <- function(df, allowSpecials = TRUE){
-  rawType = list()
-  for (counter in 1:(ncol(df))){
-    blobList <- df[,counter]#[[1]]                                              # recent change, need to test
-    # as.list(df[,counter])[1] --> doesn't work when first item = NA ?!
-    if (allowSpecials & (colnames(df)[counter] %in% columnSpecials$names)){
-      # special
-      rawType[[counter]] <- whichRawListSpecial(blobList,
-                                          specialName = colnames(df[,counter]))
-    } else {
-      rawType[[counter]] <- whichRawList(blobList)
-    }
-  }
-  return(rawType)
 }
 
 #' detemines which columns in a database table are of the blob (raw) type
@@ -412,19 +296,34 @@ determineBlobType <- function(blobLength, minimumNumber,
     return(data.frame(what = determineBlobTypeRaw(blobLength), minimumSize = 1))
   }
   if ((blobLength %% minimumNumber) == 0){
-    result <- data.frame(
+    if (minimumNumber == 1){
+      result <- data.frame(what = NA,
+                           minimumSize = NA)
+    } else {
+      result <- data.frame(
         what = determineBlobTypeRaw(blobLength = blobLength %/% minimumNumber),
         minimumSize = minimumNumber)
+    }
   } else {
     if ((blobLength %% numberOfGroups) == 0){
-      result <- data.frame(
-        what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
-        minimumSize = numberOfGroups)
+      if (numberOfGroups == 1){
+        result <- data.frame(what = NA,
+                             minimumSize = NA)
+      } else {
+        result <- data.frame(
+          what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
+          minimumSize = numberOfGroups)
+      }
     } else {
       if ((blobLength %% ratioNumberOfGroups) == 0){
-        result <- data.frame(
+        if (ratioNumberOfGroups == 1){
+          result <- data.frame(what = NA,
+                               minimumSize = NA)
+        } else {
+          result <- data.frame(
   what = determineBlobTypeRaw(blobLength = blobLength %/% ratioNumberOfGroups),
   minimumSize = ratioNumberOfGroups)
+        }
       } else {
         result <- data.frame(what = NA, minimumSize = NA)
       }
@@ -539,6 +438,9 @@ determineBlobTypes <- function(theTable, minimumNumber,
   if (nrow(blobDF) == 0){
     return(NA) # no blobs
   }
+  if (!specials){
+    blobDF <- blobDF %>% dplyr::filter(!(name %in% columnSpecials()$names))
+  }
   blobDF <- determineBlobLengths(blobDF = blobDF, theTable = theTable)
   blobDF <- bind_cols(blobDF, blobEstimateTypes(blobLengths = blobDF$length,
                                                 minimumNumber = minimumNumber,
@@ -565,21 +467,14 @@ determineBlobTypes <- function(theTable, minimumNumber,
 #' data types
 #'
 #' @param df   data.frame coming from a table from a Proteome Discoverer
-#'             database (eg .pdResult files)
-#' @param forceBlob  must be data.frame with 3 columns: name (columnName),
-#'                   what (type)& minimumSize (number of values in a cell)
-#'                   default = NA. forceBlob exists to override automatic
-#'                   conversion (which has a potential for mistakes when
-#'                   determining the type of a rawVector in a columnVector).
-#'                   If 'what' in the forceBlob data.frame = NA, then the
-#'                   columnVector will not be converted, but returned as it
-#'                   is!
-#' @param allowSpecials  allow for the 'special' cpnversions of columns with
-#'                       the names specified om the specials data.frame.
-#'                       Default = TRUE. Note: it is best to use forceBlob
-#'                       with 'what' set to NA to prevent conversion problems
+#'  database (eg .pdResult files)
+#' @param blobDF  must be data.frame with 3 columns: name (columnName),
+#'  what (type) & minimumSize (number of values in a cell) default = NA.
+#'  If 'what' in the data.frame = NA, then the columnVector will not be
+#'  converted, but returned as it is
 #' @return data.frame with all raw vector ('blob') columns converted to more
 #'         more regular data types
+#'         
 #' @note the tables/data.frame's coming from a Proteome Discoverer database
 #' (eg .pdResult files) have columns of the type raw vecotr (blob).
 #' These can be converted automatically or semi-automatically by this function
@@ -591,39 +486,38 @@ determineBlobTypes <- function(theTable, minimumNumber,
 #' in one. In those cases each element/cell of the column is two (or more)
 #' values. This function splits these columns into two seperate ones.
 #' @export
-dfTransformRaws <- function(df, forceBlob = NA, allowSpecials = TRUE){
-  # figure out which columns are raw vector (class 'blob')
-  blobColumns <- which(
-    unlist(lapply(unname(lapply(df,
-                                function(x){class(x)})),
-                  function(x){return("blob" %in% x)})))
-  if  (purrr::is_empty(blobColumns)){
-    return(df) # no blob columns present
-  } 
+dfTransformRaws <- function(df, blobDF = NA,
+                            minimumNumber = 1,
+                            numberOfGroups = minimumNumber,
+                            ratioNumberOfGroups = numberOfGroups-1,
+                            specials = TRUE){
   # determine the type of each blob column
-  colClass <- determineRawTypes(df[blobColumns], allowSpecials = allowSpecials)
+  if (identical(blobDF,NA)){
+    blobDF <- determineBlobTypes(theTable =  df,
+                                 minimumNumber = minimumNumber,
+                                 numberOfGroups = numberOfGroups,
+                                 ratioNumberOfGroups = ratioNumberOfGroups,
+                                 specials = specials)
+  }
+  if (identical(blobDF,NA)){
+    return(df)
+  }
   # start a new data.frame w/o the blob columns
-  newdf <- df[,-blobColumns]
-  blobNames <- names(df)[blobColumns]
-  for (counter in seq_along(blobColumns)){
-    if (!identical(colClass[counter],NA)){
+  newdf <- df %>% dplyr::select(-blobDF$name)
+  for (counter in 1:nrow(blobDF)){
+    if (!identical(blobDF$type,NA)){
       newColumns <- convertRawColumn(
-        df[,blobColumns[counter]], #[[1]],                                      # recent change, need to test
-        what = colClass[[counter]]$type,
-        columnName = blobNames[counter],
-        minimumSize = colClass[[counter]]$number,
-        forceBlob = forceBlob,
-        allowSpecials = allowSpecials
-        )
+        df %>% dplyr::select(blobDF$name[counter]),
+        blobDF = blobDF)
       newdf <- dplyr::bind_cols(newdf, newColumns)
     } else {
       warningMessage <- paste(
-        c("Warning: cannot automatically convert column '",
-          blobNames[counter],
+        c("Warning: cannot (automatically) convert column '",
+          blobDF$name[counter],
           "' "),
         collapse = "")
       warning(warningMessage)
-      newdf <- dplyr::bind_cols(newdf, df[,blobColumns[counter]])
+    newdf <- dplyr::bind_cols(newdf, df %>% dplyr::select(blobDF$name[counter]))
     }
   }
   return(newdf)
