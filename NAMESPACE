@@ -1,5 +1,6 @@
 importFrom(magrittr,"%>%")
 export("columnSpecials")
+export("blobEstimateTypes")
 export("dfTransformRaws")
 export("dbGetTable")
 export("tableName")

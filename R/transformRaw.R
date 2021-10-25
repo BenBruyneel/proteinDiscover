@@ -7,7 +7,6 @@
 #' @return a list of numbers (numeric) or NA (if rawVector is empty)
 #' @note numeric vectors are 9 bytes long, the first 8 are the actual
 #'       number, if the last byte (9) == 0 then the result is NA
-#'
 convertRawNumeric <- function(rawVector, minimumSize = 1){
   lengthVector <- length(rawVector) %/% 9
   if (lengthVector == 0){
@@ -414,9 +413,7 @@ determineBlobTypes <- function(theTable, minimumNumber,
                                numberOfGroups = minimumNumber,
                                ratioNumberOfGroups = numberOfGroups - 1,
                                blobDF = NA, specials = TRUE){
-  if (identical(blobDF, NA)){
-    blobDF <- getBlobs(theTable = theTable)
-  }
+  blobDF <- getBlobs(theTable = theTable)
   if (nrow(blobDF) == 0){
     return(NA) # no blobs
   }

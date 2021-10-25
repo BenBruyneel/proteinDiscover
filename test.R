@@ -166,6 +166,8 @@ determineBlobTypes <- function(blobDF, theTable, minimumNumber,
 determineBlobTypes(theTable = tkoProt,
                    minimumNumber = 1, numberOfGroups = 1,ratioNumberOfGroups = 1)
 
+
+
 tkol <- determineBlobTypes(theTable = tkoProt,
                            minimumNumber = 1, numberOfGroups = 1,ratioNumberOfGroups = 1)
 
