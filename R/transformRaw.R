@@ -5,8 +5,10 @@
 #'                    are in the rawVector. Default = 1. This catches potential
 #'                    rawVectors that are empty/NA
 #' @return a list of numbers (numeric) or NA (if rawVector is empty)
+#' 
 #' @note numeric vectors are 9 bytes long, the first 8 are the actual
 #'       number, if the last byte (9) == 0 then the result is NA
+#' @note internal function
 convertRawNumeric <- function(rawVector, minimumSize = 1){
   lengthVector <- length(rawVector) %/% 9
   if (lengthVector == 0){
@@ -32,8 +34,10 @@ convertRawNumeric <- function(rawVector, minimumSize = 1){
 #'                    are in the rawVector. Default = 1. This catches potential
 #'                    rawVectors that are empty/NA
 #' @return a list of numbers (integer) or NA (if rawVector is empty)
+#' 
 #' @note integer vectors are 5 bytes long, the first 4 are the actual
 #'       number, if the last byte (5) == 0 then the result is NA
+#' @note internal function
 convertRawInteger <- function(rawVector, minimumSize = 1){
   lengthVector <- length(rawVector) %/% 5
   if (lengthVector == 0){
@@ -59,9 +63,11 @@ convertRawInteger <- function(rawVector, minimumSize = 1){
 #'                    This is relevant for the so called specials. It indicates
 #'                    how many booleans are in the rawVector
 #' @return a list of booleans or NA (if rawVector is empty)
+#' 
 #' @note boolean vectors are 5 bytes long, the first 4 are the actual
 #'       boolean (anything but 0 is TRUE), if the last byte (5) == 0 then
 #'       the result is NA
+#' @note internal function
 convertRawSpecial <- function(rawVector, specialSize){
   if (identical(rawVector,NULL)){
     return((rep(list(NA), specialSize)))
@@ -83,7 +89,7 @@ convertRawSpecial <- function(rawVector, specialSize){
 #' 0 (FALSE), 1 (TRUE) or NA
 #' 
 #' @return data.frame with columns 'names' and 'size'
-#' @note each chunk exists of two bytes, first one is logical (boolean):
+#' @note each chunk consists of two bytes, first one is logical (boolean):
 #' zero = FALSE, otherwise TRUE. Second byte = also logical: determines if
 #' value is NA (1) or not (0)
 #' @export
@@ -107,10 +113,12 @@ columnSpecials <- function(){
 #'                     columnVector will not be converted, but returned as it
 #'                     is!
 #' @return a data.frame (!) with one or more of the converted (or not) columns
+#' 
 #' @note: if a columnVector contains multiple values per 'cell' then
 #'        the column will get split into an equal number of columns with
 #'        the name 'columnName'+"_"+number, eg column1 becomes:
 #'        column1_1, column1_2, etc
+#' @note internal function
 convertRawColumn <- function(columnVector, blobDF){
   if (colnames(columnVector)[1] %in% blobDF$name){
     blobDF <- blobDF[blobDF$name == colnames(columnVector)[1],]
@@ -167,7 +175,9 @@ convertRawColumn <- function(columnVector, blobDF){
 #'  should always be 'blob')
 #'  
 #' @note this is essentially a wrap around function for db_columnInfo
-db_getBlobs <- function(db, tableName = tableName()){
+#' @note meant for use in debugging problems
+#' @note development function, not meant for release/export 
+db_getBlobs <- function(db, tableName){
   return(dbAccess::db_columnInfo(db = db, tableName = tableName) %>%
            dplyr::filter(type == "blob"))
 }
@@ -175,8 +185,11 @@ db_getBlobs <- function(db, tableName = tableName()){
 #' detemines which columns in a table are of the blob (raw) type
 #' 
 #' @param theTable the table containing the data
-#' @return a datafrane with two columns: name = columname) and type  (which
+#' @return a data.frame with two columns: name = colum name) and type (which
 #'  should always be 'blob')
+#'  
+#' @note meant for use in debugging problems
+#' @export
 getBlobs <- function(theTable){
   temp <- purrr::map_chr(theTable,~class(.x)[1])
   return(data.frame(name = names(temp), type = unname(temp)) %>%
@@ -188,10 +201,13 @@ getBlobs <- function(theTable){
 #'  course (as all elements are supposed to have the same length). Also: if all
 #'  elements of the column are NA, the the result will be NaN
 #'  
-#' @param blobList one column data.frame (or list) of blob (raw) element type
-#'  elements
+#' @param blobList one column of a data.frame (as a list) of blob (raw) element
+#'  type elements
 #' @return the length of the elements in the data.frame (or list) column. Again:
 #'  this should be an integer
+#'  
+#' @note meant for use in debugging problems
+#' @export
 blobLength <- function(blobList){
   return(mean(unlist(lapply((lapply(blobList,length)),
                             function(x){ifelse(x==0,NA,x)})),
@@ -206,7 +222,9 @@ blobLength <- function(blobList){
 #'  the database, which was used for db_getBlobs or the table (dataframe) used
 #'  for getBlobs
 #' @return blobDF with a single column (named 'length') added which contains
-#'  the length (number of bytes) of each blob column 
+#'  the length (number of bytes) of each blob column
+#'  
+#' @note internal function 
 determineBlobLengths <- function(blobDF, theTable){
   blobDF$length <- unlist(lapply(1:nrow(blobDF),
                         function(x){blobLength(theTable[,blobDF$name[x]])}))
@@ -219,8 +237,7 @@ determineBlobLengths <- function(blobDF, theTable){
 #'  Anything else will result in NA
 #' @return a string (either "integer" or "numeric") or NA
 #' 
-#' @note internal function, but exposed to package users to enable rewriting/
-#'  extensions
+#' @note internal function
 determineBlobTypeRaw <- function(blobLength){
   return(unlist(lapply(blobLength, function(x){
                                               if (x %% 9 == 0){
@@ -268,9 +285,8 @@ determineBlobTypeRaw <- function(blobLength){
 #'  translations are resolved in a different way
 #' @note there are two ways to see potential problems with the type assignments:
 #'  the columns may contain NA values
-#' @note an example of use of this function: 
-#'  a column from a TMT11 plex analysis with 4 groups (and thus 3 ratios):
-determineBlobType <- function(blobLength, minimumNumber,
+#' @note internal function
+determineBlobType <- function(blobLength, minimumNumber = 1,
                               numberOfGroups = minimumNumber,
                               ratioNumberOfGroups = numberOfGroups - 1){
   if (blobLength %in% c(5,9)){
@@ -292,8 +308,8 @@ determineBlobType <- function(blobLength, minimumNumber,
                              minimumSize = NA)
       } else {
         result <- data.frame(
-          what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
-          minimumSize = numberOfGroups)
+        what = determineBlobTypeRaw(blobLength = blobLength %/% numberOfGroups),
+        minimumSize = numberOfGroups)
       }
     } else {
       if ((blobLength %% ratioNumberOfGroups) == 0){
@@ -360,7 +376,7 @@ determineBlobType <- function(blobLength, minimumNumber,
 #'  translations are resolved in a different way
 #' @note there are two ways to see potential problems with the type assignments:
 #'  the columns may contain NA values
-#' @export  
+#' @note internal function 
 blobEstimateTypes <- function(blobLengths, minimumNumber,
                               numberOfGroups = minimumNumber,
                               ratioNumberOfGroups = numberOfGroups - 1){
@@ -409,7 +425,7 @@ blobEstimateTypes <- function(blobLengths, minimumNumber,
 #'  translations are resolved in a different way
 #' @note there are two ways to see potential problems with the type assignments:
 #'  the columns may contain NA values
-determineBlobTypes <- function(theTable, minimumNumber,
+determineBlobTypes <- function(theTable, minimumNumber = 1,
                                numberOfGroups = minimumNumber,
                                ratioNumberOfGroups = numberOfGroups - 1,
                                blobDF = NA, specials = TRUE){

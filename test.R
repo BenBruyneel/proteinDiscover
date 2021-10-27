@@ -5,6 +5,10 @@ library(pool)
 library(dbAccess)
 library(dplyr)
 
+purrr::walk(list.files(path = "R", pattern = "*.R",
+                       full.names = TRUE), source)
+
+
 tkodb <- db_open("/home/ben/Documents/Thermo/Hela2/210105-data07.pdResult")
 
 tkoProt <- dbGetProteinTable(db = tkodb)
