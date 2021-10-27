@@ -23,4 +23,6 @@ Converts a raw vector into its boolean counterpart(s)
 boolean vectors are 5 bytes long, the first 4 are the actual
       boolean (anything but 0 is TRUE), if the last byte (5) == 0 then
       the result is NA
+
+internal function
 }

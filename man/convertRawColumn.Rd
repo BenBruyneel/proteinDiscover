@@ -5,41 +5,19 @@
 \title{function that converts a data.frame column with raw vectors into
 one or more columns containing the integer/numeric/... counterparts}
 \usage{
-convertRawColumn(
-  columnVector,
-  what,
-  columnName,
-  minimumSize = 1,
-  forceBlob = NA,
-  allowSpecials = TRUE
-)
+convertRawColumn(columnVector, blobDF)
 }
 \arguments{
 \item{columnVector}{data.frame column, eg df[,1] or df$column1}
 
-\item{what}{"integer" or "numeric" (can only be one of these two!)}
-
-\item{columnName}{character string, can be new name, can be the original
-column's name. Must be suitable name}
-
-\item{minimumSize}{A number (integer) indicating how many values are
-in the rawVectors that make up the columnVector.
-Default = 1. This catches potential rawVectors
-that are empty/NA}
-
-\item{forceBlob}{must be data.frame with 3 columns: name (columnName),
-what (type)& minimumSize (number of values in a cell)
+\item{blobDF}{must be data.frame with 3 columns: name (columnName),
+what (type) & minimumSize (number of values in a cell)
 Default = NA. forceBlob exists to override automatic
 conversion which has a potential for mistakes when
 determining the type of a rawVector in a columnVector.
 If 'what' in the forceBlob data.frame = NA, then the
 columnVector will not be converted, but returned as it
 is!}
-
-\item{allowSpecials}{allow for the 'special' cpnversions of columns with
-the names specified om the specials data.frame.
-Default = TRUE. Note: it is best to use forceBlob
-with 'what' set to NA to prevent conversion problems}
 }
 \value{
 a data.frame (!) with one or more of the converted (or not) columns
@@ -53,4 +31,6 @@ one or more columns containing the integer/numeric/... counterparts
        the column will get split into an equal number of columns with
        the name 'columnName'+"_"+number, eg column1 becomes:
        column1_1, column1_2, etc
+
+internal function
 }

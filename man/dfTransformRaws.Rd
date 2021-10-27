@@ -5,25 +5,23 @@
 \title{df_transform_raws(): converts raw columns in a data.frame to the correct
 data types}
 \usage{
-dfTransformRaws(df, forceBlob = NA, allowSpecials = TRUE)
+dfTransformRaws(
+  df,
+  blobDF = NA,
+  minimumNumber = 1,
+  numberOfGroups = minimumNumber,
+  ratioNumberOfGroups = numberOfGroups - 1,
+  specials = TRUE
+)
 }
 \arguments{
 \item{df}{data.frame coming from a table from a Proteome Discoverer
 database (eg .pdResult files)}
 
-\item{forceBlob}{must be data.frame with 3 columns: name (columnName),
-what (type)& minimumSize (number of values in a cell)
-default = NA. forceBlob exists to override automatic
-conversion (which has a potential for mistakes when
-determining the type of a rawVector in a columnVector).
-If 'what' in the forceBlob data.frame = NA, then the
-columnVector will not be converted, but returned as it
-is!}
-
-\item{allowSpecials}{allow for the 'special' cpnversions of columns with
-the names specified om the specials data.frame.
-Default = TRUE. Note: it is best to use forceBlob
-with 'what' set to NA to prevent conversion problems}
+\item{blobDF}{must be data.frame with 3 columns: name (columnName),
+what (type) & minimumSize (number of values in a cell) default = NA.
+If 'what' in the data.frame = NA, then the columnVector will not be
+converted, but returned as it is}
 }
 \value{
 data.frame with all raw vector ('blob') columns converted to more

@@ -425,6 +425,7 @@ blobEstimateTypes <- function(blobLengths, minimumNumber,
 #'  translations are resolved in a different way
 #' @note there are two ways to see potential problems with the type assignments:
 #'  the columns may contain NA values
+#' @export
 determineBlobTypes <- function(theTable, minimumNumber = 1,
                                numberOfGroups = minimumNumber,
                                ratioNumberOfGroups = numberOfGroups - 1,

@@ -22,4 +22,6 @@ Converts a raw vector into its numeric counterpart(s)
 \note{
 numeric vectors are 9 bytes long, the first 8 are the actual
       number, if the last byte (9) == 0 then the result is NA
+
+internal function
 }

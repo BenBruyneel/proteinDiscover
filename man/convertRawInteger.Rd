@@ -22,4 +22,6 @@ Converts a raw vector into its integer counterpart(s)
 \note{
 integer vectors are 5 bytes long, the first 4 are the actual
       number, if the last byte (5) == 0 then the result is NA
+
+internal function
 }
