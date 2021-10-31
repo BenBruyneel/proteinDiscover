@@ -8,11 +8,10 @@
 determineBlobLengths(blobDF, theTable)
 }
 \arguments{
-\item{blobDF}{the result from either db_getBlobs or getBlobs}
+\item{blobDF}{the result from getBlobs}
 
-\item{theTable}{the table to which blobDF refers, so either the table from 
-the database, which was used for db_getBlobs or the table (dataframe) used
-for getBlobs}
+\item{theTable}{the table to which blobDF refers (the table (data.frame) used
+for getBlobs)}
 }
 \value{
 blobDF with a single column (named 'length') added which contains

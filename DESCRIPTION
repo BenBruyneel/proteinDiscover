@@ -1,8 +1,8 @@
 Package: proteinDiscover
 Type: Package
-Imports: magrittr, dplyr, purrr, lubridate, pool, dbAccess
+Imports: magrittr, rlang, dplyr, purrr, lubridate, pool
 Title: ProteinDiscover
-Version: 0.5.0
+Version: 0.7.0
 Author: Ben Bruyneel <benbruyneel@gmail.com>
 Maintainer: Ben Bruyneel <benbruyneel@gmail.com>
 Description: Provides an interface to the data contained in Proteome Discoverer (Thermo Scientific) results.

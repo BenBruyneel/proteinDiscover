@@ -1,3 +1,35 @@
+#' Wrapper around pool::dbPool(): opens a database
+#'
+#' @param  fileName  a character vector specifying the name and location
+#'                   of the database
+#' @param  drv defines database connection type, default = RSQLite::SQLite()
+#' @param  ... to pass on additional parameters to pool::dbPool, exmples are
+#'             host = "shiny-demo.csa7qlmguqrf.us-east-1.rds.amazonaws.com"
+#'             username = "guest"
+#'             password = "guest"
+#'
+#' @return database access 'handle'
+#' @note if no file with the name 'fileName' exists, then it will be created
+#' (but obviously it will be empty, so most further commands will fail)
+#' @note if fileName == ":memory:" the database will be an in-memory database
+#' @export
+dbOpen <- function(fileName, drv = RSQLite::SQLite(), ...){
+  return(pool::dbPool(drv = drv,
+                      dbname = fileName,
+                      ...))
+}
+
+#' Wrapper around pool::pooClose():  closes an open database
+#' (normally opened earlier via eg db_open())
+#'
+#'
+#' @param db   database access 'handle' to be closed
+#'
+#' @export
+dbClose <- function(db){
+  pool::poolClose(db)
+}
+
 #' get a table from a .pdResult file
 #'
 #' @param db database access 'handle'

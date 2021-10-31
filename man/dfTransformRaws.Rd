@@ -22,6 +22,29 @@ database (eg .pdResult files)}
 what (type) & minimumSize (number of values in a cell) default = NA.
 If 'what' in the data.frame = NA, then the columnVector will not be
 converted, but returned as it is}
+
+\item{minimumNumber}{this defines the minimum number of columns a
+blob/raw type column should be split into. In TMT10plex experiments, the
+minimumNumber will usually be 10, becauseyou have 10 channels/abundances}
+
+\item{numberOfGroups}{this defines how many 'groups' are present in the data.
+Taking Abundances as an example: Proteone Discoverer has both the original
+columns (say Abundances_1 through Abundances_2), but also columns where the
+abundances, that 'belong' together, are eg averaged or some other
+(statistical) measure  is calculated over a number of columns. You may have
+eg 10 'Abundance channels' which are 5 samples total, each in duplo. This
+means that some columns in the resulting table will need to be split in 10
+different columns (the original 'Abundances') while 'grouped' columns should
+be split into 5 different columns (eg the calculated means or variations of
+the 'abundances' columns). Note that although not enforced by the code, the
+numberOfGroups should always be equal or less than the  minimumNumber
+parameter. Default value = minimumNumber}
+
+\item{ratioNumberOfGroups}{when ratios between groups are calculated we get
+columns (ratio columns) that need to be split into numberOfGroups - 1
+(which is the efault value)}
+
+\item{specials}{default is TRUE, means that specials will be taken care of}
 }
 \value{
 data.frame with all raw vector ('blob') columns converted to more
