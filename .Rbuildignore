@@ -2,4 +2,3 @@
 ^renv\.lock$
 ^.*\.Rproj$
 ^\.Rproj\.user$
-temp.R
