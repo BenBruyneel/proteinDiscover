@@ -331,7 +331,7 @@ dbGetPsmTable <- function(db,
             "ProteinGroupIDs FROM TargetProteins ",
             ifelse(masterProtein,
                    "WHERE IsMasterProtein = 0",""),
-            "))))"),
+            ")))) AND MasterProteinAccessions IS NOT NULL"),
           collapse = ""),
         sortOrder = sortOrder,
         SQL = SQL)
