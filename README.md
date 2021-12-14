@@ -6,4 +6,11 @@ It provides the ability to read results from .pdResult (.msf) files produced by 
 
 Manual coming soon...
 
+Install with the command:
+
+devtools::install_github("BenBruyneel/proteinDiscover")
+
+
 Work in progress!
+
+December, 6th 2012
