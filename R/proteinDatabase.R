@@ -4,7 +4,7 @@
 #' @param object a data object of some class
 #' @param whichClass character string: class name to be tested
 #' @return TRUE or FALSE
-isClass <- function(object, whichClass){
+is.Class <- function(object, whichClass){
   return(whichClass %in% class(object))
 }
 
@@ -157,7 +157,7 @@ dbGetProteinTable <- function(db,
 #'  "TargetPeptideGroups" table
 #'  @export
 dbGetPeptideIDs <- function(db, proteinGroupIDs, SQL = FALSE){
-  if (isClass(proteinGroupIDs,"data.frame")){
+  if (is.Class(proteinGroupIDs,"data.frame")){
     # if so then assumed to be output from dbGetProteinTable
     # for speed set columnNames = "ProteinGroupID"
     proteinGroupIDs <-
@@ -227,7 +227,7 @@ dbGetPeptideTable <- function(db,
         SQL = SQL)
     )
   } else {
-    if (isClass(PeptideIDs,"data.frame")){
+    if (is.Class(PeptideIDs,"data.frame")){
       # if so then assumed to be output from dbGetPeptideIDs
       PeptideIDs <- as.character(PeptideIDs$TargetPeptideGroupsPeptideGroupID)
     } else {
@@ -261,7 +261,7 @@ dbGetPeptideTable <- function(db,
 #'  an SQL query
 #'  @export
 dbGetPsmIDs <- function(db, PeptideGroupIDs, SQL = FALSE){
-  if (isClass(PeptideGroupIDs,"data.frame")){
+  if (is.Class(PeptideGroupIDs,"data.frame")){
     # if so then assumed to be output from dbGetTable
     # for speed set columnNames = "PeptideGroupID"
     PeptideGroupIDs <- as.character(PeptideGroupIDs$PeptideGroupID)
@@ -344,7 +344,7 @@ dbGetPsmTable <- function(db,
     # )
     # )
   } else {
-    if (isClass(PsmIDs,"data.frame")){
+    if (is.Class(PsmIDs,"data.frame")){
       # if so then assumed to be output from dbGetPsmIDs
       PsmIDs <- as.character(PsmIDs$TargetPsmsPeptideID)
     } else {
@@ -379,7 +379,7 @@ dbGetPsmTable <- function(db,
 #'  a SQL query
 #'  @export
 dbGetConsensusIDs <- function(db, PeptideGroupIDs, SQL = FALSE){
-  if (isClass(PeptideGroupIDs,"data.frame")){
+  if (is.Class(PeptideGroupIDs,"data.frame")){
     # if so then assumed to be output from dbGetTable
     # for speed set columnNames = "PeptideGroupID"
     PeptideGroupIDs <- as.character(PeptideGroupIDs$PeptideGroupID)
@@ -460,7 +460,7 @@ dbGetConsensusTable <- function(db,
       # )
     )
   } else {
-    if (isClass(ConsensusIDs,"data.frame")){
+    if (is.Class(ConsensusIDs,"data.frame")){
       # if so then assumed to be output from dbGetConsensusIDs
       ConsensusIDs <- as.character(ConsensusIDs$ConsensusFeaturesId)
     } else {
@@ -494,7 +494,7 @@ dbGetConsensusTable <- function(db,
 #'  an SQL query
 #'  @export
 dbGetQuanSpectrumIDs <- function(db, PeptideIDs, SQL = FALSE){
-  if (isClass(PeptideIDs,"data.frame")){
+  if (is.Class(PeptideIDs,"data.frame")){
     PeptideIDs <- as.character(PeptideIDs$PeptideID)
   } else {
     if (!is.character(PeptideIDs)){
@@ -567,7 +567,7 @@ dbGetQuanSpectrumInfoTable <- function(db,
       sortOrder = sortOrder,
       SQL = SQL)
   } else {
-    if (isClass(SpectrumIDs, "data.frame")){
+    if (is.Class(SpectrumIDs, "data.frame")){
       SpectrumIDs <- as.character(SpectrumIDs$QuanSpectrumInfoSpectrumID)
     } else {
       if (!is.character(SpectrumIDs)){
