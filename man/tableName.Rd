@@ -2,8 +2,8 @@
 % Please edit documentation in R/proteinDatabase.R
 \name{tableName}
 \alias{tableName}
-\title{helper function to prevent having to remember the somewhat long names of
-the most used tables}
+\title{internal helper function to prevent having to remember the somewhat
+long names of the most used tables}
 \usage{
 tableName(whichTable = "proteins")
 }
@@ -18,6 +18,6 @@ a string containing the protein discoverer table name corresponding
  to the parameter whichTable
 }
 \description{
-helper function to prevent having to remember the somewhat long names of
-the most used tables
+internal helper function to prevent having to remember the somewhat
+long names of the most used tables
 }

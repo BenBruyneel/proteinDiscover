@@ -18,7 +18,7 @@ a data.frame}
 \value{
 a data.frame containing requested data from the
  TargetPsmsTargetPeptideGroups  table or a character string specifying
- a SQL query
+ an SQL query
  @export
 }
 \description{

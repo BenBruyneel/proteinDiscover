@@ -18,7 +18,7 @@ a data.frame}
 \value{
 a data.frame containing requested data from the
  TargetProteinGroupsTargetPeptideGroups table or a character string
- specifying a SQL query
+ specifying anSQL query
 }
 \description{
 get the peptideID's from (a set of) proteinGroupIDs

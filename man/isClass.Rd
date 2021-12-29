@@ -2,7 +2,7 @@
 % Please edit documentation in R/proteinDatabase.R
 \name{isClass}
 \alias{isClass}
-\title{helper function to determine if object == whichClass or a descendant of
+\title{internal helper function to determine if object == whichClass or a descendant of
  whichClass}
 \usage{
 isClass(object, whichClass)
@@ -16,6 +16,6 @@ isClass(object, whichClass)
 TRUE or FALSE
 }
 \description{
-helper function to determine if object == whichClass or a descendant of
+internal helper function to determine if object == whichClass or a descendant of
  whichClass
 }

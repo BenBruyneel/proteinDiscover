@@ -13,4 +13,4 @@ devtools::install_github("BenBruyneel/proteinDiscover")
 
 Work in progress!
 
-December, 6th 2012
+December, 29th 2021

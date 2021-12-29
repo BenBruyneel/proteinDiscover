@@ -35,7 +35,7 @@ a data.frame}
 }
 \value{
 a data.frame containing requested data from a database table or
- a character string specifying a SQL query
+ a character string specifying an SQL query
 }
 \description{
 get a table from a .pdResult file
