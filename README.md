@@ -1,8 +1,6 @@
 # proteinDiscover
 
-R Package
-
-It provides the ability to read results from .pdResult (.msf) files produced by the Proteome Discoverer software of [Thermo Scientific](https://www.thermoscientific.com/)
+R Package that provides the ability to read results from .pdResult (.msf) files produced by the Proteome Discoverer software of [Thermo Scientific](https://www.thermoscientific.com/)
 
 New: [proteinDiscover manual](https://benbruyneel.github.io/proteinDiscover/)
 
