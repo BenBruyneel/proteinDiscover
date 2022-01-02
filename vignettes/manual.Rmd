@@ -1,0 +1,19 @@
+---
+title: "manual"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{manual}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+Please refer to <a href="https://benbruyneel.github.io/proteinDiscover/">proteinDiscover R package manual</a>
+
+

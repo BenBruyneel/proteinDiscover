@@ -1,8 +1,8 @@
 Package: proteinDiscover
 Type: Package
-Imports: magrittr, rlang, dplyr, purrr, lubridate, pool
+Imports: magrittr, rlang, dplyr, purrr, lubridate, pool, stringr, XML, tidyr, tidyselect
 Title: ProteinDiscover
-Version: 0.5.1
+Version: 0.6.0
 Author: Ben Bruyneel <benbruyneel@gmail.com>
 Maintainer: Ben Bruyneel <benbruyneel@gmail.com>
 Description: Provides an interface to the data contained in Proteome Discoverer (Thermo Scientific) results.
@@ -11,3 +11,7 @@ Encoding: UTF-8
 URL: https://github.com/BenBruyneel/proteinDiscover
 LazyData: true
 RoxygenNote: 7.1.2
+Suggests: 
+    rmarkdown,
+    knitr
+VignetteBuilder: knitr

@@ -9,6 +9,7 @@
 #'  
 #' @return a function which converts a (vector of) number(s) to the specified
 #'  strings/messages
+#' @noRd
 translateInfo <- function(translation, setNAZero = TRUE, zeroIsFirst = TRUE){
   if (zeroIsFirst){
     if (setNAZero){

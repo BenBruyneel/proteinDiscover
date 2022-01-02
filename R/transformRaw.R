@@ -9,6 +9,7 @@
 #' @note numeric vectors are 9 bytes long, the first 8 are the actual
 #'       number, if the last byte (9) == 0 then the result is NA
 #' @note internal function
+#' @noRd
 convertRawNumeric <- function(rawVector, minimumSize = 1){
   lengthVector <- length(rawVector) %/% 9
   if (lengthVector == 0){
@@ -38,6 +39,7 @@ convertRawNumeric <- function(rawVector, minimumSize = 1){
 #' @note integer vectors are 5 bytes long, the first 4 are the actual
 #'       number, if the last byte (5) == 0 then the result is NA
 #' @note internal function
+#' @noRd
 convertRawInteger <- function(rawVector, minimumSize = 1){
   lengthVector <- length(rawVector) %/% 5
   if (lengthVector == 0){
@@ -68,6 +70,7 @@ convertRawInteger <- function(rawVector, minimumSize = 1){
 #'       boolean (anything but 0 is TRUE), if the last byte (5) == 0 then
 #'       the result is NA
 #' @note internal function
+#' @noRd
 convertRawSpecial <- function(rawVector, specialSize){
   if (identical(rawVector,NULL)){
     return((rep(list(NA), specialSize)))
@@ -119,6 +122,7 @@ columnSpecials <- function(){
 #'        the name 'columnName'+"_"+number, eg column1 becomes:
 #'        column1_1, column1_2, etc
 #' @note internal function
+#' @noRd
 convertRawColumn <- function(columnVector, blobDF){
   if (colnames(columnVector)[1] %in% blobDF$name){
     blobDF <- blobDF[blobDF$name == colnames(columnVector)[1],]
@@ -207,6 +211,7 @@ blobLength <- function(blobList){
 #'  the length (number of bytes) of each blob column
 #'  
 #' @note internal function 
+#' @noRd
 determineBlobLengths <- function(blobDF, theTable){
   blobDF$length <- unlist(lapply(1:nrow(blobDF),
                         function(x){blobLength(theTable[,blobDF$name[x]])}))
@@ -220,6 +225,7 @@ determineBlobLengths <- function(blobDF, theTable){
 #' @return a string (either "integer" or "numeric") or NA
 #' 
 #' @note internal function
+#' @noRd
 determineBlobTypeRaw <- function(blobLength){
   return(unlist(lapply(blobLength, function(x){
                                               if (x %% 9 == 0){
@@ -268,6 +274,7 @@ determineBlobTypeRaw <- function(blobLength){
 #' @note there are two ways to see potential problems with the type assignments:
 #'  the columns may contain NA values
 #' @note internal function
+#' @noRd
 determineBlobType <- function(blobLength, minimumNumber = 1,
                               numberOfGroups = minimumNumber,
                               ratioNumberOfGroups = numberOfGroups - 1){
@@ -358,7 +365,8 @@ determineBlobType <- function(blobLength, minimumNumber = 1,
 #'  translations are resolved in a different way
 #' @note there are two ways to see potential problems with the type assignments:
 #'  the columns may contain NA values
-#' @note internal function 
+#' @note internal function
+#' @noRd 
 blobEstimateTypes <- function(blobLengths, minimumNumber,
                               numberOfGroups = minimumNumber,
                               ratioNumberOfGroups = numberOfGroups - 1){

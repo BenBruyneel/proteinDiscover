@@ -4,6 +4,7 @@
 #' @param object a data object of some class
 #' @param whichClass character string: class name to be tested
 #' @return TRUE or FALSE
+#' @noRd
 is.Class <- function(object, whichClass){
   return(whichClass %in% class(object))
 }
@@ -98,7 +99,8 @@ dbGetTable <- function(db,
 #'  NA
 #' @return a string containing the protein discoverer table name corresponding
 #'  to the parameter whichTable
-tableName <- function(whichTable = "proteins"){
+#' @export
+tableNames <- function(whichTable = "proteins"){
   return(switch(toupper(toString(whichTable)),
                 "PROTEINS"  = "TargetProteins",
                 "PEPTIDES"  = "TargetPeptideGroups",
@@ -131,7 +133,7 @@ dbGetProteinTable <- function(db,
                               SQL = FALSE){
   return(dbGetTable(
     db = db,
-    tableName = tableName("proteins"),
+    tableName = tableNames("proteins"),
     columnNames = columnNames,
     filtering = ifelse(masterProtein,
                        " WHERE IsMasterProtein = 0",""),
@@ -211,7 +213,7 @@ dbGetPeptideTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = tableName("peptides"),
+        tableName = tableNames("peptides"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideGroupID IN ",
@@ -238,7 +240,7 @@ dbGetPeptideTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = tableName("peptides"),
+        tableName = tableNames("peptides"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideGroupID IN ",
@@ -315,7 +317,7 @@ dbGetPsmTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = tableName("psms"),
+        tableName = tableNames("psms"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideID IN ",
@@ -355,7 +357,7 @@ dbGetPsmTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = tableName("psms"),
+        tableName = tableNames("psms"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideID IN ",
@@ -432,7 +434,7 @@ dbGetConsensusTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = tableName("Consensus"),
+        tableName = tableNames("Consensus"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE Id IN ",
@@ -471,7 +473,7 @@ dbGetConsensusTable <- function(db,
     return(
       dbGetTable(
         db = db,
-        tableName = tableName("Consensus"),
+        tableName = tableNames("Consensus"),
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE Id IN ",
