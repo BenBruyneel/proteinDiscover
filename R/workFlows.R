@@ -196,8 +196,12 @@ createDiagrammeRString <- function(nodesTable, showBelow = TRUE,
                                      name = c("Precursor Ions Quantifier",
                                               "Feature Mapper",
                                               "Reporter Ions Quantifier",
-                                              "Protein Marker"),
-                                     parent = c("last","first","last","first"))){
+                                              "Protein Marker",
+                                              "Peptide in Protein Annotation",
+                                              "Modification Sites",
+                                              "Peptide Isoform Grouper"),
+                                     parent = c("last","first","last","first",
+                                                "first","last","first"))){
   nodesString <- ""  # node definitions to be placed in diagram
   nodesString2 <- "" # node connections
   nodesString3 <- "" # node labels
