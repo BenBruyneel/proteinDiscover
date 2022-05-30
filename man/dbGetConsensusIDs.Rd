@@ -19,7 +19,6 @@ a data.frame}
 a data.frame containing requested data from the
  TargetPeptideGroupsConsensusFeatures table or a character string specifying
  a SQL query
- @export
 }
 \description{
 get the ConsensusID's from (a set of) PeptideGroupIDs

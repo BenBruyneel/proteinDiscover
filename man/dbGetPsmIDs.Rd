@@ -19,7 +19,6 @@ a data.frame}
 a data.frame containing requested data from the
  TargetPsmsTargetPeptideGroups  table or a character string specifying
  an SQL query
- @export
 }
 \description{
 get the PsmID's from (a set of) PeptideGroupIDs

@@ -58,7 +58,7 @@ df_replace <- function(df, str_replacements = replacementStrings()){
   }
   df <- as.data.frame(df)
   for (dfColumn in 1:ncol(df)){
-    if (class(df[,dfColumn]) == "character"){
+    if (is.Class(df[,dfColumn],"character")){
       for (rowCounter in 1:nrow(df)){
         for (replaceCounter in 1:nrow(str_replacements)){
           if (nchar(df[rowCounter,dfColumn]) == 1){
@@ -401,4 +401,26 @@ nodes <- function(Workflow,
     })
   }
   return(result)
+}
+
+#' Helper function that takes the result from the \code{\link{nodes}} function,
+#'  which is a named list of parameter tables (from processing or consensus
+#'  workflow), and puts it all in a single table with the names of the nodes as
+#'  an extra column
+#'
+#' @param nodesList named list of tables of workflow (node) parameters. Intended
+#'  as input here is the output from the \code{\link{nodes}} function
+#'
+#' @return data.frame, a large table of all node parameters
+#' @export
+allNodesTable <- function(nodesList){
+  for (counter in 1:length(nodesList)){
+    nodesList[[counter]]$node <- names(nodesList)[counter]
+    if (!("category" %in% colnames(nodesList[[counter]]))){
+      nodesList[[counter]]$category <- as.character(NA)
+    }
+    nodesList[[counter]] <- nodesList[[counter]] %>%
+      dplyr::select(dplyr::all_of(c("node", "category")), dplyr::everything())
+  }
+  return(dplyr::bind_rows(nodesList))
 }

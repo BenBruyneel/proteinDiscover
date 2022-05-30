@@ -18,7 +18,7 @@ a data.frame}
 \value{
 a data.frame containing requested data from the
  TargetProteinGroupsTargetPeptideGroups table or a character string
- specifying anSQL query
+ specifying an SQL query
 }
 \description{
 get the peptideID's from (a set of) proteinGroupIDs
@@ -30,5 +30,4 @@ to get the proteinpeptidelink (table =
  the result for a number of proteins at the same time). The result is a
  list of numbers which are the "TargetProteinGroupsProteinGroupID" in the
  "TargetPeptideGroups" table
- @export
 }

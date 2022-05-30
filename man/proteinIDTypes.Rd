@@ -2,7 +2,8 @@
 % Please edit documentation in R/proteinDatabase.R
 \name{proteinIDTypes}
 \alias{proteinIDTypes}
-\title{get the names of the identification types used in the database}
+\title{get the names of the identification types (sequest HT etc) used in the
+ database}
 \usage{
 proteinIDTypes(db, SQL = FALSE)
 }
@@ -16,5 +17,6 @@ a data.frame}
 data.frame with a single column: "GroupName"
 }
 \description{
-get the names of the identification types used in the database
+get the names of the identification types (sequest HT etc) used in the
+ database
 }

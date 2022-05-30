@@ -19,7 +19,6 @@ a data.frame}
 a data.frame containing requested data from the
  TargetPsmsQuanSpectrumInfo table or a character string specifying
  an SQL query
- @export
 }
 \description{
 get the SpectrumID's from (a set of) PeptideIDs

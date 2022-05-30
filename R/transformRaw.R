@@ -87,6 +87,30 @@ convertRawSpecial <- function(rawVector, specialSize){
   }
 }
 
+#' Converts the result of \code{\link{convertRawSpecial}} to a single element
+#'  character vector
+#'
+#' @param logicalList the result of \code{\link{convertRawSpecial}}, a list of
+#'  logical vectors (or NA)
+#' @param translation 3 element vector specifying the number that the elements
+#'  of the logicalList should be translated to. NA = translation[1] (0), TRUE =
+#'  translation[2] (1) and FALSE = translation[3] (2)
+#'
+#' @return a single element character vector
+#'
+#' @note internal function
+#' @noRd
+convertRawSpecialToString <- function(logicalList, translation = c(0,1,2)){
+  return(paste(unlist(lapply(logicalList,
+                             function(x){
+                               ifelse(is.na(x),
+                                      translation[1],
+                                      ifelse(x,
+                                             translation[2],
+                                             translation[2]))
+                             })), collapse = ""))
+}
+
 #' Specials are not numeric or integer, but have chunks of a certain size
 #' All encountered in Proteome Discoverer are actually booleans with a value
 #' 0 (FALSE), 1 (TRUE) or NA
@@ -141,12 +165,19 @@ convertRawColumn <- function(columnVector, blobDF){
                                    function(x){
                                      convertRawSpecial(x,
                                          specialSize = blobDF$minimumSize[1])}))
+        converted <- data.frame(matrix(converted, ncol = blobDF$minimumSize[1], byrow = TRUE))
+        converted <- data.frame(X1 = apply(converted, 1, convertRawSpecialToString))
+        blobDF$minimumSize[1] <- 1 # becomes a single string!
       }
     }
   }
   numberColumns <- blobDF$minimumSize[1]
   # numberColumns <- minimumSize  #length(converted) %/% length(columnVector)
-  tempdf <- data.frame(matrix(converted, ncol = numberColumns, byrow = TRUE))
+  if (blobDF$what[1] == "special"){
+    tempdf <- data.frame(as.matrix(converted, ncol = numberColumns, byrow = TRUE))
+  } else {
+    tempdf <- data.frame(matrix(converted, ncol = numberColumns, byrow = TRUE))
+  }
   colnames(tempdf) <- paste(blobDF$name[1],"_",1:numberColumns,sep = "")
   return(tempdf)
   if (numberColumns > 1){
