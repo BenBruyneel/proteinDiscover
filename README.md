@@ -4,7 +4,7 @@ R Package that provides the ability to read results from .pdResult (.msf) files 
 
 [proteinDiscover manual](https://benbruyneel.github.io/proteinDiscover/)
 
-[proteinDiscover news 22/05/30](https://benbruyneel.github.io/proteinDiscover/updates220529/)
+[proteinDiscover news 22/05/30](https://benbruyneel.github.io/proteinDiscover/updates220530/)
 
 [proteinDiscoverExtra](https://github.com/BenBruyneel/proteinDiscoverExtra)
 
