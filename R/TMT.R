@@ -33,7 +33,7 @@ calcData <- function(data,
   for (counter in 1:nrow(data)){
     data$calculated[counter] <- calcFunc(unlist(data %>%
                                                   dplyr::slice(counter) %>%
-                                   dplyr::select(-dplyr::all_of("calculated"))),
+                                                  dplyr::select(-dplyr::all_of("calculated"))),
                                          ...)
   }
   if (keepData) {
@@ -157,8 +157,8 @@ getProteinInfoRaw <- function(db,
   return(dbGetTable(db = db,
                     tableName = tableNames("proteins"),
                     columnNames = columnNames,
-           filtering = paste(c(" WHERE IsMasterProtein = 0 AND Accession IN ('",
-                                    paste(proteinAccessions, collapse = "', '"),
+                    filtering = paste(c(" WHERE IsMasterProtein = 0 AND Accession IN ('",
+                                        paste(proteinAccessions, collapse = "', '"),
                                         "')"),
                                       collapse = ""),
                     sortOrder = sortOrder,
@@ -208,7 +208,11 @@ getProteinInfo <- function(db,
 #' @param columnNames allows the selection of columns to take from the table. 
 #'  The columns: PeptideGroupID, Sequence, Modifications, QuanInfo are
 #'  automatically included. Default column to be retrieved is
-#'  AbundancesNormalized
+#'  AbundancesNormalized 
+#' @param addStandardColumns if TRUE then the following columns are added by
+#'  default to the columnNames argument: "PeptideGroupID", "Sequence",
+#'  "Modifications" & "QuanInfo". Please note that this will give problems if
+#'  these columns are also in the columnNames argument
 #' @param proteinAccessions defines from which protein(s) info will be retrieved
 #'  (character vector)
 #'  
@@ -216,23 +220,26 @@ getProteinInfo <- function(db,
 #' @export
 getPeptideInfoRaw <- function(db,
                               columnNames = "AbundancesNormalized",
+                              addStandardColumns = TRUE,
                               proteinAccessions = knockOutProteins()$Accession){
   ProteinGroupIDs <- unlist(lapply(proteinAccessions,
-                            function(x){
-                              getProteinInfoRaw(db = db,
-                                                columnNames = c("Accession","ProteinGroupIDs"),
-                                                proteinAccessions = x,
-                                                sortOrder = NA)$ProteinGroupIDs
-                            }))
+                                   function(x){
+                                     getProteinInfoRaw(db = db,
+                                                       columnNames = c("Accession","ProteinGroupIDs"),
+                                                       proteinAccessions = x,
+                                                       sortOrder = NA)$ProteinGroupIDs
+                                   }))
   tempResult <- lapply(ProteinGroupIDs,
-                   function(x){
-                     dbGetPeptideIDs(db = db, proteinGroupIDs = x) %>%
+                       function(x){
+                         dbGetPeptideIDs(db = db, proteinGroupIDs = x) %>%
                            dbGetPeptideTable(db = db,
-                                        columnNames = append(c("PeptideGroupID",
-                                                                    "Sequence",
-                                                                "Modifications",
-                                                                    "QuanInfo"),
-                                                                  columnNames),
+                                             columnNames = ifelseProper(addStandardColumns,
+                                                                        append(c("PeptideGroupID",
+                                                                                 "Sequence",
+                                                                                 "Modifications",
+                                                                                 "QuanInfo"),
+                                                                               columnNames),
+                                                                        columnNames),
                                              sortOrder = c("Sequence",
                                                            "Modifications"))
                        })
@@ -248,6 +255,12 @@ getPeptideInfoRaw <- function(db,
 #'  The columns: PeptideGroupID, Sequence, Modifications, QuanInfo are
 #'  automatically included. Default column to be retrieved is
 #'  AbundancesNormalized
+#' @param addStandardColumns if TRUE then the following columns are added by
+#'  default to the columnNames argument: "PeptideGroupID", "Sequence",
+#'  "Modifications" & "QuanInfo". Please note that this will give problems if
+#'  these columns are also in the columnNames argument. Also: to be able to
+#'  use the argument removeUnusedQuantInfo = TRUE, you MUST retrieve the
+#'  "QuantInfo" column 
 #' @param proteinAccessions defines from which protein(s) info will be retrieved
 #'  (character vector)
 #' @param removeUnusedQuantInfo default = TRUE. IF TRUE then only peptide info
@@ -263,10 +276,12 @@ getPeptideInfoRaw <- function(db,
 #' @export
 getPeptideInfo <- function(db,
                            columnNames = "AbundancesNormalized",
+                           addStandardColumns = TRUE,
                            proteinAccessions = knockOutProteins()$Accession,
                            removeUnusedQuantInfo = TRUE){
   tempResult <- getPeptideInfoRaw(db = db,
                                   columnNames = columnNames,
+                                  addStandardColumns = addStandardColumns,
                                   proteinAccessions = proteinAccessions)
   tempResult <- lapply(tempResult, function(x){
     if (removeUnusedQuantInfo){
@@ -315,7 +330,7 @@ getPeptideInfo <- function(db,
 calcIFIs <- function(db,
                      selected = "His4",
                      accession = 
-             knockOutProteins()$Accession[knockOutProteins()$short == selected],
+                       knockOutProteins()$Accession[knockOutProteins()$short == selected],
                      columns = "Abundances",
                      groups = tmt11Channels(),
                      IFIName = "IFI",
@@ -331,9 +346,9 @@ calcIFIs <- function(db,
   tempResult <- dplyr::bind_cols(tempResult)
   tempResult <- dplyr::bind_cols(tempResult %>%
                                    dplyr::select(which(tempGroups == selected)),
-                            calcData(tempResult[,which(tempGroups != selected)],
-                                     calcFunc = calcFunc, calcName = calcName,
-                                     na.rm = na.rm))
+                                 calcData(tempResult[,which(tempGroups != selected)],
+                                          calcFunc = calcFunc, calcName = calcName,
+                                          na.rm = na.rm))
   tempResult <- 1-(tempResult[,1]/tempResult[,2])
   tempResult <- data.frame(variable = selected, value = tempResult)
   colnames(tempResult) <- c("Short", IFIName)

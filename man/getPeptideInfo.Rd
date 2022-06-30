@@ -8,6 +8,7 @@
 getPeptideInfo(
   db,
   columnNames = "AbundancesNormalized",
+  addStandardColumns = TRUE,
   proteinAccessions = knockOutProteins()$Accession,
   removeUnusedQuantInfo = TRUE
 )
@@ -19,6 +20,13 @@ getPeptideInfo(
 The columns: PeptideGroupID, Sequence, Modifications, QuanInfo are
 automatically included. Default column to be retrieved is
 AbundancesNormalized}
+
+\item{addStandardColumns}{if TRUE then the following columns are added by
+default to the columnNames argument: "PeptideGroupID", "Sequence",
+"Modifications" & "QuanInfo". Please note that this will give problems if
+these columns are also in the columnNames argument. Also: to be able to
+use the argument removeUnusedQuantInfo = TRUE, you MUST retrieve the
+"QuantInfo" column}
 
 \item{proteinAccessions}{defines from which protein(s) info will be retrieved
 (character vector)}
