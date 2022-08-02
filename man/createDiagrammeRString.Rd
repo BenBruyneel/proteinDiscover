@@ -9,10 +9,10 @@ createDiagrammeRString(
   nodesTable,
   showBelow = TRUE,
   returnString = TRUE,
-  hideDoubleParents = data.frame(name = c("Precursor Ions Quantifier",
-    "Feature Mapper", "Reporter Ions Quantifier", "Protein Marker",
-    "Peptide in Protein Annotation", "Modification Sites", "Peptide Isoform Grouper"),
-    parent = c("last", "first", "last", "first", "first", "last", "first"))
+  hideDoubleParents = data.frame(name = c("Precursor Ions Quantifier", "Feature Mapper",
+    "Reporter Ions Quantifier", "Protein Marker", "Peptide in Protein Annotation",
+    "Modification Sites", "Peptide Isoform Grouper"), parent = c("last", "first", "last",
+    "first", "first", "last", "first"))
 )
 }
 \arguments{

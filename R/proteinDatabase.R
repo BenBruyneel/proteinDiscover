@@ -830,6 +830,10 @@ dbGetPsmIDs <- function(db, PeptideGroupIDs, SQL = FALSE){
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the
 #'  columnNames vector containing a series of "ASC" or "DESC"
+#' @param filtering allows for " WHERE <expression>" additions to the SQL
+#'  statement default = " " (no filtering). Note: always put a space (" ")
+#'  before any statement. If NA then no filtering is applied. Note that
+#'  filtering is only used when the argument PsmIDs is not NA
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame
 #' @return a data.frame containing requested data from the peptide table or
@@ -840,6 +844,7 @@ dbGetPsmTable <- function(db,
                           columnNames = NA,
                           masterProtein = TRUE,
                           sortOrder = NA,
+                          filtering = "MasterProteinAccessions IS NOT NULL",
                           SQL = FALSE){
   if (identical(PsmIDs,NA)){
     return(
@@ -889,7 +894,11 @@ dbGetPsmTable <- function(db,
         columnNames = columnNames,
         filtering = paste(
           c(" WHERE PeptideID IN ",
-            "(", paste(PsmIDs, collapse = ","),")"), collapse = ""),
+            "(", paste(PsmIDs, collapse = ","),")",
+            ifelse(is.na(filtering),
+                   "",
+                   paste(c(" AND ", filtering), collapse =""))),
+            collapse = ""),
         sortOrder = sortOrder,
         SQL = SQL)
     )
