@@ -292,7 +292,9 @@ dbGetProteins <- function(db, UniqueSequenceIDs, columns = NA, SQL = FALSE){
                filtering = paste(c(" WHERE UniqueSequenceID IN ('",
                                    paste(UniqueSequenceIDs, collapse = "','"),
                                    "') "),
-                                 collapse = "")))
+                                 collapse = ""),
+               SQL = SQL)
+    )
 }
 
 #' A bit more advanced version of \code{\link{dbGetProteinTable}} which allows
@@ -304,6 +306,8 @@ dbGetProteins <- function(db, UniqueSequenceIDs, columns = NA, SQL = FALSE){
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
 #'  default == TRUE. If more advanced filtering is needed, use db_getTable()
+#'  Note that if set to FALSE then no filtering is performed on the status of
+#'  the IsMasterProtein column
 #' @param sortOrder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the

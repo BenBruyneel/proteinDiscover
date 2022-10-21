@@ -1,5 +1,6 @@
 importFrom(magrittr,"%>%")
 importFrom(rlang,".data")
+importFrom(RSQLite,"SQLite")
 export(MSfileInfo)
 export(SearchInfo)
 export(allNodesTable)

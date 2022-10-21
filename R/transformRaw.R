@@ -235,15 +235,16 @@ blobLength <- function(blobList){
 #' determines the length of the blob (raw) type columns in a data.frame from a
 #'  table (possibly from a database) 
 #'  
-#' @param blobDF the result from getBlobs
 #' @param theTable the table to which blobDF refers (the table (data.frame) used
 #'  for getBlobs)
+#' @param blobDF the result from getBlobs (default value is a call to getBlobs
+#'  with 'theTable' as argument)
 #' @return blobDF with a single column (named 'length') added which contains
 #'  the length (number of bytes) of each blob column
 #'  
 #' @note internal function 
 #' @noRd
-determineBlobLengths <- function(blobDF, theTable){
+determineBlobLengths <- function(theTable, blobDF = getBlobs(theTable)){
   blobDF$length <- unlist(lapply(1:nrow(blobDF),
                         function(x){blobLength(theTable[,blobDF$name[x]])}))
   return(blobDF)
