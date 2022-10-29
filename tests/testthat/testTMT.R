@@ -1,10 +1,10 @@
 test_that("calcData works",{
-  testResult <- calcData(mtcars)
+  testResult <- calcData(mtcarsInternal())
   expect_equal(as.integer(testResult$median[1:4]), 
                c(4, 4, 4, 3))
   expect_equal(format(sum(testResult$median), digits = 6, nsmall = 4),
          "135.6440")
-  testResult <- calcData(mtcars, calcName = "Mean", calcFunc = mean)
+  testResult <- calcData(mtcarsInternal(), calcName = "Mean", calcFunc = mean)
   expect_equal(format(testResult$Mean[1:4], digits = 6, nsmall = 4),
                c("29.9073", "29.9814", "23.5982", "38.7395"))
   expect_equal(format(sum(testResult$Mean), digits = 6, nsmall = 4),
