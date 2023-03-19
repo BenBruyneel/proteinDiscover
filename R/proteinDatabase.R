@@ -229,7 +229,7 @@ getAcquistionDateTime <- function(db, useAmPm = TRUE,
 #' @returns one or more POSIXct/POSIXt object(S)
 #' @export
 getAcquistionDate <- function(db){
-  return(getAcquistionDateTime(db = db, format = "%m/%d/%Y"))
+  return(getAcquistionDateTime(db = db) %>% lubridate::as_date())
 }
 
 # ---- Proteins ----
