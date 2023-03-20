@@ -66,14 +66,14 @@ studyDefinitionFactors <- function(analysisDef){
     result <- dplyr::bind_rows(
       lapply(
         analysisDef$StudyDefinition$Factors, function(x){x[[".attrs"]]})) %>%
-      dplyr::select(.data$Kind, .data$Name, .data$Description, .data$Id) %>%
+      dplyr::select("Kind", "Name", "Description", "Id") %>%
       dplyr::rename_with(tolower) %>%
-      dplyr::rename(type = .data$kind)
+      dplyr::rename(type = "kind")
     result$factors <- unname(lapply(analysisDef$StudyDefinition$Factors,
                         function(x){dplyr::bind_rows(x$FactorOptions) %>%
-                            dplyr::select(.data$Kind, .data$Value, .data$Id) %>%
+                            dplyr::select("Kind", "Value", "Id") %>%
                             dplyr::rename_with(tolower) %>%
-                            dplyr::rename(type = .data$kind)}))
+                            dplyr::rename(type = "kind")}))
     return(result)
   }
 }
@@ -105,7 +105,7 @@ studyDefinitionFileSets <- function(analysisDef,
     result[[2]] <- dplyr::bind_rows(lapply(analysisDef$StudyDefinition$FileSets, function(x){x[["Files"]]$File}))
     if (splitFileSize){
       result[[2]] <- result[[2]] %>%
-        tidyr::separate(col = .data$FileSize, into = c("FileSize","FileSizeFormat"), sep = " ")
+        tidyr::separate(col = "FileSize", into = c("FileSize","FileSizeFormat"), sep = " ")
     }
     if (joinedTables){
       return(dplyr::bind_cols(result))
@@ -191,7 +191,7 @@ getCorrections <- function(resultXML){
     names(correctionFactors[[counter]]) <- namesCorrections
   }
   result <- dplyr::bind_cols(correctionTable, dplyr::bind_rows(correctionFactors)) %>%
-    dplyr::select(-.data$TagID,-.data$IsActive)
+    dplyr::select(-!!rlang::sym("TagID"),-rlang::sym("IsActive"))
   colnames(result)[1:2] <- c("MassTag","ReporterIon")
   return(result)
 }
@@ -286,13 +286,13 @@ sampleInfo <- function(sampleInfos){
 samplesInfo <- function(numOrDenom){
   tempResult <- lapply(numOrDenom, sampleInfo)
   result <- dplyr::bind_rows(lapply(tempResult, function(x){x$info2})) %>%
-    dplyr::select(-.data$Version) %>%
-    dplyr::select(.data$SampleName, tidyselect::everything())
+    dplyr::select(-rlang::sym("Version")) %>%
+    dplyr::select("SampleName", tidyselect::everything())
   for (counter in 1:length(tempResult)){
     tempResult[[counter]]$info1 <- tempResult[[counter]]$info1 %>%
-      dplyr::select(-.data$Version, -.data$Kind) %>%
+      dplyr::select(-rlang::sym("Version"), -rlang::sym("Kind")) %>%
       dplyr::rename_at("Value", ~paste(c("Value",1), collapse = "")) %>%
-      dplyr::mutate(Name =  stringr::str_replace_all(.data$Name, pattern = " ",
+      dplyr::mutate(Name =  stringr::str_replace_all(!!rlang::sym("Name"), pattern = " ",
                                                      replacement = "_")) %>%
       t() %>%
       data.frame()

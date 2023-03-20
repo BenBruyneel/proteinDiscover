@@ -125,8 +125,8 @@ workflowInfo <- function(db, workflowsTable = "WorkFlows",
                              study = "Study")
   resultTable <- resultTable %>%
     dplyr::select(dplyr::all_of(unlist(workflowsTableNames)),
-                  .data$template,
-                  .data$numberOfNodes)
+                  "template",
+                  "numberOfNodes")
   if (!returnNodeData){
     return(resultTable)
   } else {
@@ -233,7 +233,7 @@ createDiagrammeRString <- function(nodesTable, showBelow = TRUE,
       parents <- strsplit(nodesTable$parent[counter],";")[[1]]
       if (!identical(hideDoubleParents,NA)){
         hideIt <-  hideDoubleParents %>%
-          dplyr::filter(.data$name == nodesTable$name[counter])
+          dplyr::filter(!!rlang::sym("name") == nodesTable$name[counter])
         if (nrow(hideIt) > 0){
           if (hideIt$parent[1] == "first"){
             parents <- parents[1]
@@ -356,14 +356,14 @@ nodes <- function(Workflow,
       return(resultx)
     } else {
       return(resultx %>%
-           dplyr::select(.data$FriendlyName, .data$Category, .data$IsAdvanced,
-                         .data$IsHidden, .data$IsConfig, .data$DisplayValue) %>%
-               dplyr::rename(name = .data$FriendlyName,
-                             category = .data$Category,
-                             advanced = .data$IsAdvanced,
-                             hidden = .data$IsHidden,
-                             configuration = .data$IsConfig,
-                             value = .data$DisplayValue))
+           dplyr::select("FriendlyName", "Category", "IsAdvanced",
+                         "IsHidden", "IsConfig", "DisplayValue") %>%
+               dplyr::rename(name = "FriendlyName",
+                             category = "Category",
+                             advanced = "IsAdvanced",
+                             hidden = "IsHidden",
+                             configuration = "IsConfig",
+                             value = "DisplayValue"))
     }
   })
   names(result) <- nodeNames(Workflow)
@@ -371,8 +371,8 @@ nodes <- function(Workflow,
     result <- lapply(result, function(x){
       if (ncol(x)>0){
         return(x %>%
-                 dplyr::filter(.data$hidden != "True") %>%
-                 dplyr::select(-.data$hidden))
+                 dplyr::filter(!!rlang::sym("hidden") != "True") %>%
+                 dplyr::select(-!!rlang::sym("hidden")))
       } else {
         return(x)
       }
@@ -382,8 +382,8 @@ nodes <- function(Workflow,
     result <- lapply(result, function(x){
       if (ncol(x)>0){
         return(x %>%
-                 dplyr::filter(.data$configuration != "True") %>%
-                 dplyr::select(-.data$configuration))
+                 dplyr::filter(!!rlang::sym("configuration") != "True") %>%
+                 dplyr::select(-!!rlang::sym("configuration")))
       } else {
         return(x)
       }
@@ -393,8 +393,8 @@ nodes <- function(Workflow,
     result <- lapply(result, function(x){
       if (ncol(x)>0){
         return(x %>%
-                 dplyr::filter(.data$advanced != "True") %>%
-                 dplyr::select(-.data$advanced))
+                 dplyr::filter(!!rlang::sym("advanced") != "True") %>%
+                 dplyr::select(-!!rlang::sym("advanced")))
       } else {
         return(x)
       }
