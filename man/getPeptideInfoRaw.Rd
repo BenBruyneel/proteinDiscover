@@ -8,7 +8,7 @@
 \usage{
 getPeptideInfoRaw(
   db,
-  columnNames = "AbundancesNormalized",
+  columns = "AbundancesNormalized",
   addStandardColumns = TRUE,
   proteinAccessions = knockOutProteins()$Accession
 )
@@ -16,7 +16,7 @@ getPeptideInfoRaw(
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{columnNames}{allows the selection of columns to take from the table. 
+\item{columns}{allows the selection of columns to take from the table. 
 The columns: PeptideGroupID, Sequence, Modifications, QuanInfo are
 automatically included. Default column to be retrieved is
 AbundancesNormalized}

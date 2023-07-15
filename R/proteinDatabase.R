@@ -2,7 +2,7 @@
 
 #' Wrapper around pool::dbPool(): opens a database
 #'
-#' @param  fileName  a character vector specifying the name and location
+#' @param  filename  a character vector specifying the name and location
 #'                   of the database
 #' @param  drv defines database connection type, default = RSQLite::SQLite()
 #' @param  ... to pass on additional parameters to pool::dbPool, exmples are
@@ -15,9 +15,9 @@
 #' (but obviously it will be empty, so most further commands will fail)
 #' @note if fileName == ":memory:" the database will be an in-memory database
 #' @export
-dbOpen <- function(fileName, drv = RSQLite::SQLite(), ...){
+dbOpen <- function(filename, drv = RSQLite::SQLite(), ...){
   return(pool::dbPool(drv = drv,
-                      dbname = fileName,
+                      dbname = filename,
                       ...))
 }
 
@@ -35,13 +35,13 @@ dbClose <- function(db){
 #' get a table from a .pdResult file
 #'
 #' @param db database access 'handle'
-#' @param tableName used to pass on the name of the table containing the data
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param tablename used to pass on the name of the table containing the data
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param filtering allows for " WHERE <expression>" additions to the SQL
 #'  statement default = " " (no filtering). Note: always put a space (" ")
 #'  before any statement
-#' @param sortOrder allows for sorting of the selected columns,
+#' @param sortorder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid value is a character character
 #'  vector of columnNames to be used for sorting string (with "ASC" or "DESC"
 #'  if needed) 
@@ -51,53 +51,35 @@ dbClose <- function(db){
 #'  a character string specifying an SQL query
 #' @export
 dbGetTable <- function(db,
-                       tableName,
-                       columnNames = NA, 
+                       tablename,
+                       columns = NA, 
                        filtering = " ",
-                       sortOrder = NA,
+                       sortorder = NA,
                        SQL = FALSE){
-  if (!identical(sortOrder,NA)){
-    sortColumns = paste(c(sortOrder),collapse = ", ")
+  if (!identical(sortorder,NA)){
+    sortColumns = paste(c(sortorder),collapse = ", ")
   } else {
-    sortOrder = NA
+    sortorder = NA
   }
   query <- paste(c("SELECT ",
-                   ifelse(identical(columnNames,NA),
+                   ifelse(identical(columns,NA),
                           "*",
-                          paste(columnNames,
+                          paste(columns,
                                 collapse = ", ")),
-                   " FROM ", tableName,
+                   " FROM ", tablename,
                    filtering, 
-                   ifelse(identical(sortOrder,NA),
+                   ifelse(identical(sortorder,NA),
                           "",
                           paste(c(" ORDER BY ",sortColumns),
                                 collapse = "")
                    )
-  ), collapse = "")
+           ), collapse = "")
+  query <- stringr::str_trim(query, side = "both")
   if (!SQL){
     return(pool::dbGetQuery(db, query))
   } else (
     return(query)
   )
-}
-
-#' internal helper function to prevent having to remember the somewhat
-#' long names of the most used tables
-#' 
-#' @param whichTable can be either "proteins","peptides","psms" or "consensus"
-#'  character do not need to be lower or upper case (all are converted to upper
-#'  case). If another string is used as a parameter, the function will return
-#'  NA
-#' @return a string containing the protein discoverer table name corresponding
-#'  to the parameter whichTable
-#' @export
-tableNames <- function(whichTable = "proteins"){
-  return(switch(toupper(toString(whichTable)),
-                "PROTEINS"  = "TargetProteins",
-                "PEPTIDES"  = "TargetPeptideGroups",
-                "PSMS"      = "TargetPsms",
-                "CONSENSUS" = "ConsensusFeatures",
-                NA))
 }
 
 #' get the names of the identification types (sequest HT etc) used in the
@@ -112,8 +94,8 @@ proteinIDTypes <- function(db, SQL = FALSE){
   return(
     dbGetTable(
       db = db,
-      tableName = "ProteinIdentificationGroups",
-      columnNames = "GroupName",
+      tablename = "ProteinIdentificationGroups",
+      columns = "GroupName",
       SQL = SQL
     )
   )
@@ -138,17 +120,17 @@ MSfileInfo <- function(db, type = "XcaliburRawfile",
       return(
         dbGetTable(
           db = db,
-          tableName = "WorkFlowInputFiles",
+          tablename = "WorkFlowInputFiles",
           SQL = TRUE))
     } else {
       tempResult <- dbGetTable(
         db = db,
-        tableName = "WorkFlowInputFiles")
+        tablename = "WorkFlowInputFiles")
     }
   } else {
     tempResult <- dbGetTable(
       db = db,
-      tableName = "WorkFlowInputFiles",
+      tablename = "WorkFlowInputFiles",
       filtering = paste(c(" WHERE FileType IN (",
                           paste(c("'",
                                   paste(type,collapse = "','"),
@@ -177,23 +159,29 @@ SearchInfo <- function(db, SQL = FALSE){
   return(
     dbGetTable(
       db = db,
-      tableName = "WorkflowMessages",
+      tablename = "WorkflowMessages",
       SQL = SQL))
 }
 
 #' get the total search time  from the database
 #'
 #' @param db database access 'handle'
+#' @param SQL allows the function to return the SQL query statement used
 #' @return numeric: search time in seconds
 #' @export
-totalSearchTime <- function(db){
-  temptbl <-
-    pool::dbGetQuery(db,
-                     "SELECT * FROM (SELECT Time FROM WorkflowMessages
-                     ORDER BY Time DESC LIMIT 1) UNION
-                     SELECT * FROM (SELECT Time FROM WorkflowMessages
-                     ORDER BY Time ASC LIMIT 1)")
-  return((temptbl$Time[2] - temptbl$Time[1])/10000000)
+totalSearchTime <- function(db, SQL = FALSE){
+  sqlString <- paste("SELECT * FROM (SELECT Time FROM WorkflowMessages",
+                     "ORDER BY Time DESC LIMIT 1) UNION",
+                     "SELECT * FROM (SELECT Time FROM WorkflowMessages",
+                     "ORDER BY Time ASC LIMIT 1)", sep = " ")
+  if (SQL){
+    return(sqlString)
+  } else {
+    temptbl <-
+      pool::dbGetQuery(db,
+                       sqlString)
+    return((temptbl$Time[2] - temptbl$Time[1])/10000000)
+  }
 }
 
 #' function to retrieve the acquisition date & time of the files used to
@@ -213,7 +201,7 @@ totalSearchTime <- function(db){
 getAcquistionDateTime <- function(db, useAmPm = TRUE,
                                   format = ifelse(useAmPm,
                                                   "%m/%d/%Y %I:%M:%S %p",
-                                                  "%m/%d/%Y %H:%M:%S")){
+                                                  "%m/%d/%Y %H:%M:%S %p")){
   return(studyDefinitionFileSets(analysisDefinition(db = db))$FileTime %>%
            lubridate::as_datetime(format = format))
 }
@@ -238,11 +226,11 @@ getAcquistionDate <- function(db){
 #' (essentially a wrapper around db_getTable())
 #'
 #' @param db database access 'handle'
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
 #'  default == TRUE. If more advanced filtering is needed, use db_getTable()
-#' @param sortOrder allows for sorting of the selected columns,
+#' @param sortorder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the
 #'  columnNames vector containing a series of "ASC" or "DESC"
@@ -252,17 +240,17 @@ getAcquistionDate <- function(db){
 #'  a character string specifying a SQL query
 #' @export
 dbGetProteinTable <- function(db,
-                              columnNames = NA,
+                              columns = NA,
                               masterProtein = TRUE,
-                              sortOrder = NA,
+                              sortorder = NA,
                               SQL = FALSE){
   return(dbGetTable(
     db = db,
-    tableName = tableNames("proteins"),
-    columnNames = columnNames,
+    tablename = tableNames("proteins"),
+    columns = columns,
     filtering = ifelse(masterProtein,
                        " WHERE IsMasterProtein = 0",""),
-    sortOrder = sortOrder,
+    sortorder = sortorder,
     SQL = SQL))
 }
 
@@ -271,7 +259,10 @@ dbGetProteinTable <- function(db,
 #'
 #' @param db database access 'handle'
 #'
-#' @param UniqueSequenceIDs specifies from which proteins to get info
+#' @param UniqueSequenceIDs character vector that specifies for which proteins
+#'  to get info. Please note that in the 'TargetProteins' table the column
+#'  'UniqueSequenceID' is integer64 class. To prevent issues these values should
+#'  be converted to character vector(s).
 #' @param columns character vector, specifies which columns to retrieve
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame#'
@@ -287,8 +278,9 @@ dbGetProteins <- function(db, UniqueSequenceIDs, columns = NA, SQL = FALSE){
     }
   }
   return(
-    dbGetTable(db = db, tableName = tableNames("proteins"),
-               columnNames = columns,
+    dbGetTable(db = db,
+               tablename = tableNames("proteins"),
+               columns = columns,
                filtering = paste(c(" WHERE UniqueSequenceID IN ('",
                                    paste(UniqueSequenceIDs, collapse = "','"),
                                    "') "),
@@ -302,13 +294,13 @@ dbGetProteins <- function(db, UniqueSequenceIDs, columns = NA, SQL = FALSE){
 #'  not work properly
 #'
 #' @param db database access 'handle'
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
 #'  default == TRUE. If more advanced filtering is needed, use db_getTable()
 #'  Note that if set to FALSE then no filtering is performed on the status of
 #'  the IsMasterProtein column
-#' @param sortOrder allows for sorting of the selected columns,
+#' @param sortorder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the
 #'  columnNames vector containing a series of "ASC" or "DESC"
@@ -320,20 +312,20 @@ dbGetProteins <- function(db, UniqueSequenceIDs, columns = NA, SQL = FALSE){
 #' @return a data.frame containing requested data from the protein table or
 #'  a character string specifying an SQL query
 #' @export
-dbGetProteinFiltered <- function(db, columnNames = NA, masterProtein = FALSE,
-                                 sortOrder = NA, filtering = NA, SQL = FALSE){
-  return(dbGetTable(db = db, tableName = tableNames("proteins"), 
-                    columnNames = columnNames,
+dbGetProteinFiltered <- function(db, columns = NA, masterProtein = FALSE,
+                                 sortorder = NA, filtering = NA, SQL = FALSE){
+  return(dbGetTable(db = db, tablename = tableNames("proteins"), 
+                    columns = columns,
             filtering = paste(c(ifelse(!identical(filtering,NA) | masterProtein,
                                                " WHERE ", " "),
                                         ifelse(masterProtein,
                                                " IsMasterProtein = 0"," "),
                                 ifelse(!identical(filtering,NA) & masterProtein,
                                                " AND ", " "),
-                                        ifelse(identical(filtering, NA),
-                                               " ", filtering), " "),
+                                        ifelseProper(identical(filtering, NA),
+                                               " ", paste(filtering, collapse = " AND ")), " "),
                                       collapse = ""),
-                    sortOrder = sortOrder,
+                    sortorder = sortorder,
                     SQL = SQL))
 }
 
@@ -350,8 +342,15 @@ dbGetProteinFiltered <- function(db, columnNames = NA, masterProtein = FALSE,
 #' 
 #' @export
 dbGetProteinUniqueSequenceIDs <- function(db, accession = NA, SQL = FALSE){
+  if (is.Class(accession,"data.frame")){
+    if ("Accession" %in% colnames(accession)){
+      accession <- accession$Accession
+    } else {
+      accession <- accession[,1]
+    }
+  }
   return(dbGetProteinFiltered(db = db,
-                              columnNames = "UniqueSequenceID",
+                              columns = "UniqueSequenceID",
                               filtering = paste(c("Accession IN ('",
                                                   paste(accession,
                                                         collapse = "','"),
@@ -376,8 +375,8 @@ dbGetProteinUniqueSequenceIDs <- function(db, accession = NA, SQL = FALSE){
 #' @export
 dbGetProteinGroups <- function(db, proteinGroupIDs, columns = NA, SQL = FALSE){
   if (is.Class(proteinGroupIDs,"data.frame")){
-    if ("proteinGroupIDs" %in% colnames(proteinGroupIDs)){
-      proteinGroupIDs <- proteinGroupIDs$proteinGroupID
+    if ("ProteinGroupIDs" %in% colnames(proteinGroupIDs)){
+      proteinGroupIDs <- proteinGroupIDs$ProteinGroupID
     } else {
       proteinGroupIDs <- proteinGroupIDs[,1]
     }
@@ -388,8 +387,8 @@ dbGetProteinGroups <- function(db, proteinGroupIDs, columns = NA, SQL = FALSE){
   }
   return(dbGetTable(
     db = db,
-    tableName = "TargetProteinGroups",
-    columnNames = columns,
+    tablename = "TargetProteinGroups",
+    columns = columns,
     filtering = paste(c(" WHERE ProteinGroupID IN (",
                         paste(c("'",
                                 paste(proteinGroupIDs,collapse = "','"),
@@ -397,7 +396,7 @@ dbGetProteinGroups <- function(db, proteinGroupIDs, columns = NA, SQL = FALSE){
                               collapse = ""),
                         ")"),
                       collapse = ""),
-    sortOrder = NA,
+    sortorder = NA,
     SQL = SQL))
 }
 
@@ -406,7 +405,9 @@ dbGetProteinGroups <- function(db, proteinGroupIDs, columns = NA, SQL = FALSE){
 #' @param db database access 'handle'
 #' @param proteinUniqueIDs the UniqueSequenceID's for which the proteinGroupID's
 #'  are to be retrieved. Usually these UniqueSequenceID's will come from a
-#'  protein table
+#'  protein table. Please note that a 'regular' bit64::as.integer64 vector may
+#'  fail due to conversion issues. It is better to pass this type of vector as
+#'  a character vector
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame#'
 #'  
@@ -417,15 +418,17 @@ dbGetProteinGroups <- function(db, proteinGroupIDs, columns = NA, SQL = FALSE){
 #' @export
 dbGetProteinGroupIDs <- function(db, proteinUniqueIDs, SQL = FALSE){
   if (is.Class(proteinUniqueIDs,"data.frame")){
-    proteinUniqueIDs <- bit64::as.integer64(proteinUniqueIDs$UniqueSequenceID)
-  } else {
-    proteinUniqueIDs <- bit64::as.integer64(proteinUniqueIDs)
+    if ("UniqueSequenceID" %in% colnames(proteinUniqueIDs)) {
+      proteinUniqueIDs <- as.character(proteinUniqueIDs$UniqueSequenceID)
+    } else {
+      proteinUniqueIDs <- as.character(proteinUniqueIDs[,1])
+    }
   }
   return(
     dbGetTable(
       db = db,
-      tableName = "TargetProteinGroupsTargetProteins",
-      columnNames = "TargetProteinGroupsProteinGroupID",
+      tablename = "TargetProteinGroupsTargetProteins",
+      columns = "TargetProteinGroupsProteinGroupID",
       filtering = paste(c(" WHERE TargetProteinsUniqueSequenceID IN (",
                           paste(c("'",
                                   paste(proteinUniqueIDs,collapse = "','"),
@@ -433,7 +436,7 @@ dbGetProteinGroupIDs <- function(db, proteinUniqueIDs, SQL = FALSE){
                                 collapse = ""),
                           ")"),
                         collapse = ""),
-      sortOrder = NA,
+      sortorder = NA,
       SQL = SQL)
   )
 }
@@ -446,7 +449,8 @@ dbGetProteinGroupIDs <- function(db, proteinUniqueIDs, SQL = FALSE){
 #'
 #' @param db database access 'handle'
 #' @param proteinGroupIDs the protein group(s) for which the UniqueSequenceID's
-#'  should be retrieved
+#'  should be retrieved. This can also be a (collpased) character vector where
+#'  the protein groups are separated by ';'
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame#'
 #'
@@ -459,17 +463,24 @@ dbGetProteinGroupIDs <- function(db, proteinUniqueIDs, SQL = FALSE){
 #' 
 #' @export
 dbGetProteinIDs <- function(db, proteinGroupIDs, SQL = FALSE){
+  # print(proteinGroupIDs)
   if (is.Class(proteinGroupIDs,"data.frame")){
-    proteinGroupIDs <- proteinGroupIDs$proteinGroupID
-  }
-  if (sum(grepl(proteinGroupIDs, pattern = ";")) > 0){
-    proteinGroupIDs <- unique(unlist(lapply(proteinGroupIDs,
-                                            function(x){strsplit(x, split = ";")})))
+    if ("ProteinGroupIDs" %in% colnames(proteinGroupIDs)){
+      proteinGroupIDs <- proteinGroupIDs$ProteinGroupIDs
+    } else {
+      proteinGroupIDs <- proteinGroupIDs[,1]
+    }
+  } else {
+    if (sum(grepl(proteinGroupIDs, pattern = ";")) > 0){
+      proteinGroupIDs <- unique(unlist(lapply(proteinGroupIDs,
+                                              function(x){
+                                                strsplit(x,split = ";")})))
+    }
   }
   return(dbGetTable(
     db = db,
-    tableName = "TargetProteinGroupsTargetProteins",
-    columnNames = "TargetProteinsUniqueSequenceID",
+    tablename = "TargetProteinGroupsTargetProteins",
+    columns = "TargetProteinsUniqueSequenceID",
     filtering = paste(c(" WHERE TargetProteinGroupsProteinGroupID IN (",
                         paste(c("'",
                                 paste(proteinGroupIDs,collapse = "','"),
@@ -477,7 +488,7 @@ dbGetProteinIDs <- function(db, proteinGroupIDs, SQL = FALSE){
                               collapse = ""),
                         ")"),
                       collapse = ""),
-    sortOrder = NA,
+    sortorder = NA,
     SQL = SQL))
 }
 
@@ -489,22 +500,26 @@ dbGetProteinIDs <- function(db, proteinGroupIDs, SQL = FALSE){
 #'  as the input for \code{\link{dbGetAnnotationGroups}}
 #'
 #' @param db database access 'handle'
-#' @param UniqueSequenceIDs the UniqueSequenceID's (unique protein identifier),
+#' @param uniqueSequenceIDs the UniqueSequenceID's (unique protein identifier),
 #'  usually coming from protein table
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame
 #'
 #' @return a data.frame or a character vector (SQL)
 #' @export
-dbGetProteinAnnotationGroupIDs <- function(db, UniqueSequenceIDs, SQL = FALSE){
-  if (is.Class(UniqueSequenceIDs,"data.frame")){
-    UniqueSequenceIDs <- UniqueSequenceIDs$UniqueSequenceID
+dbGetProteinAnnotationGroupIDs <- function(db, uniqueSequenceIDs, SQL = FALSE){
+  if (is.Class(uniqueSequenceIDs,"data.frame")){
+    if ("UniqueSequenceID" %in% colnames(uniqueSequenceIDs)){
+      uniqueSequenceIDs <- uniqueSequenceIDs$UniqueSequenceID
+    } else {
+      uniqueSequenceIDs <- uniqueSequenceIDs[,1]
+    }
   }
   return(
-    dbGetTable(db = db, tableName = "AnnotationProteinGroupsTargetProteins",
-               columnNames = "AnnotationProteinGroupsProteinAnnotationGroupID",
+    dbGetTable(db = db, tablename = "AnnotationProteinGroupsTargetProteins",
+               columns = "AnnotationProteinGroupsProteinAnnotationGroupID",
                filtering = paste(c(" WHERE TargetProteinsUniqueSequenceID IN ('",
-                                   paste(UniqueSequenceIDs , collapse = "','"),
+                                   paste(uniqueSequenceIDs , collapse = "','"),
                                    "') "),
                                  collapse = ""), SQL = SQL))
 }
@@ -515,24 +530,28 @@ dbGetProteinAnnotationGroupIDs <- function(db, UniqueSequenceIDs, SQL = FALSE){
 #'  can serve as the input for \code{\link{dbGetProteins}}
 #'  
 #' @param db database access 'handle'
-#' @param ProteinAnnotationGroupIDs the protein annotation group ID's for which
+#' @param proteinAnnotationGroupIDs the protein annotation group ID's for which
 #'  to get the UniqueSequenceID's
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame
 #'
 #' @return a data.frame or a character vector (SQL)
 #' @export
-dbGetAnnotatedProteins <- function(db, ProteinAnnotationGroupIDs, SQL = FALSE){
-  if (is.Class(ProteinAnnotationGroupIDs,"data.frame")){
-    ProteinAnnotationGroupIDs <-
-      ProteinAnnotationGroupIDs$ProteinAnnotationGroupID
+dbGetAnnotatedProteins <- function(db, proteinAnnotationGroupIDs, SQL = FALSE){
+  if (is.Class(proteinAnnotationGroupIDs,"data.frame")){
+    if ("ProteinAnnotationGroupID" %in% colnames(proteinAnnotationGroupIDs)){
+      proteinAnnotationGroupIDs <-
+        proteinAnnotationGroupIDs$ProteinAnnotationGroupID
+    } else {
+      proteinAnnotationGroupIDs <- proteinAnnotationGroupIDs[,1]
+    }
   }
   return(
-    dbGetTable(db = db, tableName = "AnnotationProteinGroupsTargetProteins",
-               columnNames = "TargetProteinsUniqueSequenceID",
+    dbGetTable(db = db, tablename = "AnnotationProteinGroupsTargetProteins",
+               columns = "TargetProteinsUniqueSequenceID",
                filtering = paste(
                c(" WHERE AnnotationProteinGroupsProteinAnnotationGroupID IN ('",
-                   paste(ProteinAnnotationGroupIDs , collapse = "','"),
+                   paste(proteinAnnotationGroupIDs , collapse = "','"),
                    "') "),
                  collapse = ""), SQL = SQL))
 }
@@ -541,27 +560,33 @@ dbGetAnnotatedProteins <- function(db, ProteinAnnotationGroupIDs, SQL = FALSE){
 #'  \code{\link{dbGetProteinAnnotationGroupIDs}} as input
 #'
 #' @param db database access 'handle'
-#' @param ProteinAnnotationGroupIDs the protein annotation group ID's for which
+#' @param proteinAnnotationGroupIDs the protein annotation group ID's for which
 #'  to get information
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame
 #'
 #' @return a data.frame or a character vector (SQL)
 #' @export
-dbGetAnnotationGroups <- function(db, ProteinAnnotationGroupIDs = NA,
-                                  columnNames = NA, SQL = FALSE){
-  if (is.Class(ProteinAnnotationGroupIDs,"data.frame")){
- ProteinAnnotationGroupIDs <- ProteinAnnotationGroupIDs$ProteinAnnotationGroupID
+dbGetAnnotationGroups <- function(db, proteinAnnotationGroupIDs = NA,
+                                  columns = NA, SQL = FALSE){
+  if (is.Class(proteinAnnotationGroupIDs,"data.frame")){
+    if ("AnnotationProteinGroupsProteinAnnotationGroupID" %in%
+        colnames(proteinAnnotationGroupIDs)){
+      proteinAnnotationGroupIDs <-
+       proteinAnnotationGroupIDs$AnnotationProteinGroupsProteinAnnotationGroupID
+    } else {
+      proteinAnnotationGroupIDs <- proteinAnnotationGroupIDs[,1]
+    }
   }
   return(
-    dbGetTable(db = db, tableName = "AnnotationProteinGroups",
-               columnNames = columnNames,
-              filtering = ifelseProper(identical(ProteinAnnotationGroupIDs, NA),
+    dbGetTable(db = db, tablename = "AnnotationProteinGroups",
+               columns = columns,
+              filtering = ifelseProper(identical(proteinAnnotationGroupIDs, NA),
                                         " ",
                                 paste(c(" WHERE ProteinAnnotationGroupID IN ('",
-                                        paste(ProteinAnnotationGroupIDs,
+                                        paste(proteinAnnotationGroupIDs,
                                               collapse = "','"),
                                         "') "),
                                       collapse = "")),
@@ -574,9 +599,9 @@ dbGetAnnotationGroups <- function(db, ProteinAnnotationGroupIDs = NA,
 #'  'like'
 #'
 #' @param db database access 'handle'
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
-#' @param GroupAnnotationAccession identification of the annotation, usually
+#' @param groupAnnotationAccession identification of the annotation, usually
 #'  something like GO:....  (gene ontology) or pF.... (protein family). Note
 #'  that when this argument is not NAm the arguments dealing with description
 #'  etc are ignored 
@@ -616,8 +641,8 @@ dbGetAnnotationGroups <- function(db, ProteinAnnotationGroupIDs = NA,
 #' @return a data.frame or a character vector (SQL)
 #' @export
 dbGetAnnotationGroupsFiltered <- function(
-    db, columnNames = NA,
-    GroupAnnotationAccession = NA, description = NA,
+    db, columns = NA,
+    groupAnnotationAccession = NA, description = NA,
     UpperCase = FALSE, LowerCase = FALSE,
     like = FALSE, likePre = "%", likePost = "%",
     # in case of like needs to single string
@@ -625,7 +650,7 @@ dbGetAnnotationGroupsFiltered <- function(
   if ((length(description) > 1) & (like)){
     stop("Cannot combine multi-element 'description' argument with like = TRUE")
   }
-  if (identical(GroupAnnotationAccession,NA)){
+  if (identical(groupAnnotationAccession,NA)){
     if (!identical(description,NA)){
       description <- paste(c(" WHERE ",
                              ifelse(UpperCase,
@@ -648,22 +673,26 @@ dbGetAnnotationGroupsFiltered <- function(
                            collapse = "") 
       
       return(
-        dbGetTable(db = db, tableName = "AnnotationProteinGroups",
-                   columnNames = columnNames,
+        dbGetTable(db = db, tablename = "AnnotationProteinGroups",
+                   columns = columns,
                    filtering = description,
                    SQL = SQL))
     } else {
       return(NA)
     }
   } else {
-    if (is.Class(GroupAnnotationAccession,"data.frame")){
-   GroupAnnotationAccession <- GroupAnnotationAccession$GroupAnnotationAccession
+    if (is.Class(groupAnnotationAccession,"data.frame")){
+      if ("GroupAnnotationAccession" %in% colnames(groupAnnotationAccession)){
+   groupAnnotationAccession <- groupAnnotationAccession$GroupAnnotationAccession
+      } else {
+        groupAnnotationAccession <- groupAnnotationAccession[,1]
+      }
     }
     return(
-      dbGetTable(db = db, tableName = "AnnotationProteinGroups",
-                 columnNames = columnNames,
+      dbGetTable(db = db, tablename = "AnnotationProteinGroups",
+                 columns = columns,
                  filtering = paste(c(" WHERE GroupAnnotationAccession IN ('",
-                                     paste(GroupAnnotationAccession,
+                                     paste(groupAnnotationAccession,
                                            collapse = "','"),
                                      "') "),
                                    collapse = ""),
@@ -693,18 +722,18 @@ dbGetAnnotationGroupsFiltered <- function(
 dbGetPeptideIDs <- function(db, proteinGroupIDs, SQL = FALSE){
   if (is.Class(proteinGroupIDs,"data.frame")){
     # if so then assumed to be output from dbGetProteinTable
-    # for speed set columnNames = "ProteinGroupID"
-    proteinGroupIDs <-
-      as.character(proteinGroupIDs$ProteinGroupID)
-  } else {
-    if (!is.character(proteinGroupIDs)){
-      proteinGroupIDs <- as.character(proteinGroupIDs)
+    # for speed set columns = "ProteinGroupID"
+    if ("ProteinGroupIDs" %in% colnames(proteinGroupIDs)){
+      proteinGroupIDs <-
+        proteinGroupIDs$ProteinGroupIDs
+    } else {
+      proteinGroupIDs <- proteinGroupIDs[,1]
     }
   }
   return(dbGetTable(
     db = db,
-    tableName = "TargetProteinGroupsTargetPeptideGroups",
-    columnNames = "TargetPeptideGroupsPeptideGroupID",
+    tablename = "TargetProteinGroupsTargetPeptideGroups",
+    columns = "TargetPeptideGroupsPeptideGroupID",
     filtering = paste(c(" WHERE TargetProteinGroupsProteinGroupID IN (",
                         paste(c("'",
                                 paste(proteinGroupIDs,collapse = "','"),
@@ -712,21 +741,21 @@ dbGetPeptideIDs <- function(db, proteinGroupIDs, SQL = FALSE){
                               collapse = ""),
                         ")"),
                       collapse = ""),
-    sortOrder = NA,
+    sortorder = NA,
     SQL = SQL))
 }
 
 #' get the paptide table belonging defined by PeptideIDs
 #'
 #' @param db database access 'handle'
-#' @param PeptideIDs the peptideIDs to be retrieved. This can be in numeric or
+#' @param peptideIDs the peptideIDs to be retrieved. This can be in numeric or
 #'  character vector format OR the output from the dbGetPeptideIDs function
 #'  (a data.frame with column "TargetPeptideGroupsPeptideGroupID")
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
 #'  default == TRUE. If more advanced filtering is needed, use db_getTable()
-#' @param sortOrder allows for sorting of the selected columns,
+#' @param sortorder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the
 #'  columnNames vector containing a series of "ASC" or "DESC"
@@ -736,17 +765,17 @@ dbGetPeptideIDs <- function(db, proteinGroupIDs, SQL = FALSE){
 #'  a character string specifying a SQL query
 #' @export
 dbGetPeptideTable <- function(db,
-                              PeptideIDs = NA,
-                              columnNames = NA,
+                              peptideIDs = NA,
+                              columns = NA,
                               masterProtein = TRUE,
-                              sortOrder = NA,
+                              sortorder = NA,
                               SQL = FALSE){
-  if (identical(PeptideIDs,NA)){
+  if (identical(peptideIDs,NA)){
     return(
       dbGetTable(
         db = db,
-        tableName = tableNames("peptides"),
-        columnNames = columnNames,
+        tablename = tableNames("peptides"),
+        columns = columns,
         filtering = paste(
           c(" WHERE PeptideGroupID IN ",
             "(SELECT TargetPeptideGroupsPeptideGroupID FROM ",
@@ -757,27 +786,24 @@ dbGetPeptideTable <- function(db,
                    "WHERE IsMasterProtein = 0",""),
             "))"),
           collapse = ""),
-        sortOrder = sortOrder,
+        sortorder = sortorder,
         SQL = SQL)
     )
   } else {
-    if (is.Class(PeptideIDs,"data.frame")){
+    if (is.Class(peptideIDs,"data.frame")){
       # if so then assumed to be output from dbGetPeptideIDs
-      PeptideIDs <- as.character(PeptideIDs$TargetPeptideGroupsPeptideGroupID)
-    } else {
-      if (!is.character(PeptideIDs)){
-        PeptideIDs <- as.character(PeptideIDs)
-      }
+      if ("TargetPeptideGroupsPeptideGroupID" %in% colnames(peptideIDs))
+      peptideIDs <- peptideIDs$TargetPeptideGroupsPeptideGroupID
     }
     return(
       dbGetTable(
         db = db,
-        tableName = tableNames("peptides"),
-        columnNames = columnNames,
+        tablename = tableNames("peptides"),
+        columns = columns,
         filtering = paste(
           c(" WHERE PeptideGroupID IN ",
-            "(", paste(PeptideIDs, collapse = ","),")"), collapse = ""),
-        sortOrder = sortOrder,
+            "(", paste(peptideIDs, collapse = ","),")"), collapse = ""),
+        sortorder = sortorder,
         SQL = SQL)
     )
   }
@@ -786,7 +812,7 @@ dbGetPeptideTable <- function(db,
 #' get the PsmID's from (a set of) PeptideGroupIDs
 #' 
 #' @param db database access 'handle'
-#' @param PeptideGroupIDs the PeptideGroupIDs usually come from the
+#' @param peptideGroupIDs the PeptideGroupIDs usually come from the
 #'  TargetPeptideGroups Table. This can be in numeric or character vector format
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame  
@@ -794,28 +820,26 @@ dbGetPeptideTable <- function(db,
 #'  TargetPsmsTargetPeptideGroups  table or a character string specifying
 #'  an SQL query
 #' @export
-dbGetPsmIDs <- function(db, PeptideGroupIDs, SQL = FALSE){
-  if (is.Class(PeptideGroupIDs,"data.frame")){
-    # if so then assumed to be output from dbGetTable
-    # for speed set columnNames = "PeptideGroupID"
-    PeptideGroupIDs <- as.character(PeptideGroupIDs$PeptideGroupID)
-  } else {
-    if (!is.character(PeptideGroupIDs)){
-      PeptideGroupIDs <- as.character(PeptideGroupIDs)
+dbGetPsmIDs <- function(db, peptideGroupIDs, SQL = FALSE){
+  if (is.Class(peptideGroupIDs,"data.frame")){
+    if ("PeptideGroupID" %in% colnames(peptideGroupIDs)){
+      peptideGroupIDs <- peptideGroupIDs$PeptideGroupID
+    } else {
+      peptideGroupIDs <- peptideGroupIDs[,1]
     }
   }
   return(dbGetTable(
     db = db,
-    tableName = "TargetPsmsTargetPeptideGroups",
-    columnNames = "TargetPsmsPeptideID",
+    tablename = "TargetPsmsTargetPeptideGroups",
+    columns = "TargetPsmsPeptideID",
     filtering = paste(c(" WHERE TargetPeptideGroupsPeptideGroupID IN (",
                         paste(c("'",
-                                paste(PeptideGroupIDs,collapse = "','"),
+                                paste(peptideGroupIDs,collapse = "','"),
                                 "'"),
                               collapse = ""),
                         ")"),
                       collapse = ""),
-    sortOrder = NA,
+    sortorder = NA,
     SQL = SQL))
 }
 
@@ -823,14 +847,14 @@ dbGetPsmIDs <- function(db, PeptideGroupIDs, SQL = FALSE){
 #' get the PSM table belonging to the PsmIDs
 #'
 #' @param db database access 'handle'
-#' @param PsmIDs the PsmIDs to be retrieved. This can be in numeric or
+#' @param psmIDs the PsmIDs to be retrieved. This can be in numeric or
 #'  character vector format OR the output from the dbGetPsmIDs function
 #'  (a data.frame with column "TargetPsmsPeptideID")
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
 #'  default == TRUE. If more advanced filtering is needed, use db_getTable()
-#' @param sortOrder allows for sorting of the selected columns,
+#' @param sortorder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the
 #'  columnNames vector containing a series of "ASC" or "DESC"
@@ -844,18 +868,18 @@ dbGetPsmIDs <- function(db, PeptideGroupIDs, SQL = FALSE){
 #'  a character string specifying a SQL query
 #' @export
 dbGetPsmTable <- function(db,
-                          PsmIDs = NA,
-                          columnNames = NA,
+                          psmIDs = NA,
+                          columns = NA,
                           masterProtein = TRUE,
-                          sortOrder = NA,
+                          sortorder = NA,
                           filtering = "MasterProteinAccessions IS NOT NULL",
                           SQL = FALSE){
-  if (identical(PsmIDs,NA)){
+  if (identical(psmIDs,NA)){
     return(
       dbGetTable(
         db = db,
-        tableName = tableNames("psms"),
-        columnNames = columnNames,
+        tablename = tableNames("psms"),
+        columns = columns,
         filtering = paste(
           c(" WHERE PeptideID IN ",
             "(SELECT TargetPsmsPeptideID FROM TargetPsmsTargetPeptideGroups",
@@ -870,40 +894,30 @@ dbGetPsmTable <- function(db,
                    "WHERE IsMasterProtein = 0",""),
             ")))) AND MasterProteinAccessions IS NOT NULL"),
           collapse = ""),
-        sortOrder = sortOrder,
+        sortorder = sortorder,
         SQL = SQL)
     )
-    # alternative: (not full SQL)
-    # dbGetPsmTable(db = db1,
-    #               PsmIDs = dbGetPeptideTable(db = db1,
-    #                          PeptideIDs = dbGetProteinTable(db = db1,
-    #                                   columnNames = "ProteinGroupIDs") %>%
-    #           dbGetPeptideIDs(db = db1), columnNames = "PeptideGroupID") %>%
-    #          dbGetPsmIDs(db = db1)
-    # )
-    # )
   } else {
-    if (is.Class(PsmIDs,"data.frame")){
-      # if so then assumed to be output from dbGetPsmIDs
-      PsmIDs <- as.character(PsmIDs$TargetPsmsPeptideID)
-    } else {
-      if (!is.character(PsmIDs)){
-        PsmIDs <- as.character(PsmIDs)
+    if (is.Class(psmIDs,"data.frame")){
+      if ("TargetPsmsPeptideID" %in% colnames(psmIDs)){
+        psmIDs <- psmIDs$TargetPsmsPeptideID
+      } else {
+        psmIDs <- psmIDs[,1]
       }
     }
     return(
       dbGetTable(
         db = db,
-        tableName = tableNames("psms"),
-        columnNames = columnNames,
+        tablename = tableNames("psms"),
+        columns = columns,
         filtering = paste(
           c(" WHERE PeptideID IN ",
-            "(", paste(PsmIDs, collapse = ","),")",
+            "(", paste(psmIDs, collapse = ","),")",
             ifelse(is.na(filtering),
                    "",
                    paste(c(" AND ", filtering), collapse =""))),
             collapse = ""),
-        sortOrder = sortOrder,
+        sortorder = sortorder,
         SQL = SQL)
     )
   }
@@ -914,7 +928,7 @@ dbGetPsmTable <- function(db,
 #' get the ConsensusID's from (a set of) PeptideGroupIDs
 #' 
 #' @param db database access 'handle'
-#' @param PeptideGroupIDs the PeptideGroupIDs usually come from the
+#' @param peptideGroupIDs the PeptideGroupIDs usually come from the
 #'  TargetPeptideGroups Table. This can be in numeric or character vector format
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame  
@@ -922,42 +936,40 @@ dbGetPsmTable <- function(db,
 #'  TargetPeptideGroupsConsensusFeatures table or a character string specifying
 #'  a SQL query
 #' @export
-dbGetConsensusIDs <- function(db, PeptideGroupIDs, SQL = FALSE){
-  if (is.Class(PeptideGroupIDs,"data.frame")){
-    # if so then assumed to be output from dbGetTable
-    # for speed set columnNames = "PeptideGroupID"
-    PeptideGroupIDs <- as.character(PeptideGroupIDs$PeptideGroupID)
-  } else {
-    if (!is.character(PeptideGroupIDs)){
-      PeptideGroupIDs <- as.character(PeptideGroupIDs)
+dbGetConsensusIDs <- function(db, peptideGroupIDs, SQL = FALSE){
+  if (is.Class(peptideGroupIDs,"data.frame")){
+    if ("PeptideGroupID" %in% peptideGroupIDs){
+      peptideGroupIDs <- peptideGroupIDs$PeptideGroupID
+    } else {
+      peptideGroupIDs <- peptideGroupIDs[,1]
     }
   }
   return(dbGetTable(
     db = db,
-    tableName = "TargetPeptideGroupsConsensusFeatures",
-    columnNames = "ConsensusFeaturesId",
+    tablename = "TargetPeptideGroupsConsensusFeatures",
+    columns = "ConsensusFeaturesId",
     filtering = paste(c(" WHERE TargetPeptideGroupsPeptideGroupID IN (",
                         paste(c("'",
-                                paste(PeptideGroupIDs,collapse = "','"),
+                                paste(peptideGroupIDs,collapse = "','"),
                                 "'"),
                               collapse = ""),
                         ")"),
                       collapse = ""),
-    sortOrder = NA,
+    sortorder = NA,
     SQL = SQL))
 }
 
 #' get the Consensus Features table belonging to the ConsensusIDs
 #'
 #' @param db database access 'handle'
-#' @param ConsensusIDs the PsmIDs to be retrieved. This can be in numeric or
+#' @param consensusIDs the PsmIDs to be retrieved. This can be in numeric or
 #'  character vector format OR the output from the dbGetConsensusIDs function
 #'  (a data.frame with column "ConsensusFeaturesId")
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
 #'  default == TRUE. If more advanced filtering is needed, use db_getTable()
-#' @param sortOrder allows for sorting of the selected columns,
+#' @param sortorder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the
 #'  columnNames vector containing a series of "ASC" or "DESC"
@@ -967,17 +979,17 @@ dbGetConsensusIDs <- function(db, PeptideGroupIDs, SQL = FALSE){
 #'  a character string specifying a SQL query
 #' @export
 dbGetConsensusTable <- function(db,
-                                ConsensusIDs = NA,
-                                columnNames = NA,
+                                consensusIDs = NA,
+                                columns = NA,
                                 masterProtein = TRUE,
-                                sortOrder = NA,
+                                sortorder = NA,
                                 SQL = FALSE){
-  if (identical(ConsensusIDs,NA)){
+  if (identical(consensusIDs,NA)){
     return(
       dbGetTable(
         db = db,
-        tableName = tableNames("Consensus"),
-        columnNames = columnNames,
+        tablename = tableNames("Consensus"),
+        columns = columns,
         filtering = paste(
           c(" WHERE Id IN ",
             "(SELECT ConsensusFeaturesId FROM TargetPeptideGroupsConsensusFeatures",
@@ -992,27 +1004,26 @@ dbGetConsensusTable <- function(db,
                    "WHERE IsMasterProtein = 0",""),
             "))))"),
           collapse = ""),
-        sortOrder = sortOrder,
+        sortorder = sortorder,
         SQL = SQL)
     )
   } else {
-    if (is.Class(ConsensusIDs,"data.frame")){
-      # if so then assumed to be output from dbGetConsensusIDs
-      ConsensusIDs <- as.character(ConsensusIDs$ConsensusFeaturesId)
-    } else {
-      if (!is.character(ConsensusIDs)){
-        ConsensusIDs <- as.character(ConsensusIDs)
+    if (is.Class(consensusIDs,"data.frame")){
+      if ("ConsensusFeaturesId" %in% colnames(consensusIDs)){
+        consensusIDs <- consensusIDs$ConsensusFeaturesId
+      } else {
+        consensusIDs <- consensusIDs[,1]
       }
     }
     return(
       dbGetTable(
         db = db,
-        tableName = tableNames("Consensus"),
-        columnNames = columnNames,
+        tablename = tableNames("Consensus"),
+        columns = columns,
         filtering = paste(
           c(" WHERE Id IN ",
-            "(", paste(ConsensusIDs, collapse = ","),")"), collapse = ""),
-        sortOrder = sortOrder,
+            "(", paste(consensusIDs, collapse = ","),")"), collapse = ""),
+        sortorder = sortorder,
         SQL = SQL)
     )
   }
@@ -1021,7 +1032,7 @@ dbGetConsensusTable <- function(db,
 #' get the SpectrumID's from (a set of) PeptideIDs
 #' 
 #' @param db database access 'handle'
-#' @param PeptideIDs the PeptideIDs usually come from the
+#' @param peptideIDs the PeptideIDs usually come from the
 #'  TargetPsms Table. This can be in numeric or character vector format
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame  
@@ -1029,40 +1040,40 @@ dbGetConsensusTable <- function(db,
 #'  TargetPsmsQuanSpectrumInfo table or a character string specifying
 #'  an SQL query
 #' @export
-dbGetQuanSpectrumIDs <- function(db, PeptideIDs, SQL = FALSE){
-  if (is.Class(PeptideIDs,"data.frame")){
-    PeptideIDs <- as.character(PeptideIDs$PeptideID)
-  } else {
-    if (!is.character(PeptideIDs)){
-      PeptideIDs <- as.character(PeptideIDs)
+dbGetQuanSpectrumIDs <- function(db, peptideIDs, SQL = FALSE){
+  if (is.Class(peptideIDs,"data.frame")){
+    if ("PeptideID" %in% colnames(peptideIDs)){
+      peptideIDs <- peptideIDs$PeptideID
+    } else {
+      peptideIDs <- peptideIDs[,1]
     }
   }
   return(dbGetTable(
     db = db,
-    tableName = "TargetPsmsQuanSpectrumInfo",
-    columnNames = "QuanSpectrumInfoSpectrumID",
+    tablename = "TargetPsmsQuanSpectrumInfo",
+    columns = "QuanSpectrumInfoSpectrumID",
     filtering = paste(c(" WHERE TargetPsmsPeptideID IN (",
                         paste(c("'",
-                                paste(PeptideIDs,collapse = "','"),
+                                paste(peptideIDs,collapse = "','"),
                                 "'"),
                               collapse = ""),
                         ")"),
                       collapse = ""),
-    sortOrder = NA,
+    sortorder = NA,
     SQL = SQL))
 }
 
 #' get the QuanSpectrumInfo table belonging to the SpectrumID's
 #'
 #' @param db database access 'handle'
-#' @param SpectrumIDs the SpectrumID's to be retrieved. This can be in numeric
+#' @param spectrumIDs the SpectrumID's to be retrieved. This can be in numeric
 #'  or character vector format OR the output from the dbGetQuanSpectrumIDs
 #'  function (a data.frame with column "QuanSpectrumInfoSpectrumID")
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
 #'  default == TRUE. If more advanced filtering is needed, use db_getTable()
-#' @param sortOrder allows for sorting of the selected columns,
+#' @param sortorder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the
 #'  columnNames vector containing a series of "ASC" or "DESC"
@@ -1072,16 +1083,16 @@ dbGetQuanSpectrumIDs <- function(db, PeptideIDs, SQL = FALSE){
 #'  table or a character string specifying a SQL query
 #' @export
 dbGetQuanSpectrumInfoTable <- function(db,
-                                       SpectrumIDs = NA,
-                                       columnNames = NA,
+                                       spectrumIDs = NA,
+                                       columns = NA,
                                        masterProtein = TRUE,
-                                       sortOrder = NA,
+                                       sortorder = NA,
                                        SQL = FALSE){
-  if (identical(SpectrumIDs,NA)){
+  if (identical(spectrumIDs,NA)){
     dbGetTable(
       db = db,
-      tableName = "QuanSpectrumInfo",
-      columnNames = columnNames,
+      tablename = "QuanSpectrumInfo",
+      columns = columns,
       filtering = paste(
         c(" WHERE SpectrumID IN ",
           "(SELECT QuanSpectrumInfoSpectrumID FROM TargetPsmsQuanSpectrumInfo",
@@ -1100,25 +1111,25 @@ dbGetQuanSpectrumInfoTable <- function(db,
                  "WHERE IsMasterProtein = 0",""),
           ")))) AND MasterProteinAccessions IS NOT NULL))"),
         collapse = ""),
-      sortOrder = sortOrder,
+      sortorder = sortorder,
       SQL = SQL)
   } else {
-    if (is.Class(SpectrumIDs, "data.frame")){
-      SpectrumIDs <- as.character(SpectrumIDs$QuanSpectrumInfoSpectrumID)
-    } else {
-      if (!is.character(SpectrumIDs)){
-        SpectrumIDs <- as.character(SpectrumIDs)
+    if (is.Class(spectrumIDs, "data.frame")){
+      if ("QuanSpectrumInfoSpectrumID" %in% colnames(spectrumIDs)){
+        spectrumIDs <- spectrumIDs$QuanSpectrumInfoSpectrumID
+      } else {
+        spectrumIDs <- spectrumIDs[,1]
       }
     }
     return(
       dbGetTable(
         db = db,
-        tableName = "QuanSpectrumInfo",
-        columnNames = columnNames,
+        tablename = "QuanSpectrumInfo",
+        columns = columns,
         filtering = paste(
           c(" WHERE SpectrumID IN ",
-            "(", paste(SpectrumIDs, collapse = ","),")"), collapse = ""),
-        sortOrder = sortOrder,
+            "(", paste(spectrumIDs, collapse = ","),")"), collapse = ""),
+        sortorder = sortorder,
         SQL = SQL
       )
     )
@@ -1145,14 +1156,18 @@ dbGetQuanSpectrumInfoTable <- function(db,
 #' @export
 dbGetModificationsSitesIDs <- function(db, proteinUniqueIDs, SQL = FALSE){
   if (is.Class(proteinUniqueIDs,"data.frame")){
-    proteinUniqueIDs <- bit64::as.integer64(proteinUniqueIDs$UniqueSequenceID)
+    if ("UniqueSequenceID" %in% colnames(proteinUniqueIDs)){
+      proteinUniqueIDs <- bit64::as.integer64(proteinUniqueIDs$UniqueSequenceID)
+    } else {
+      proteinUniqueIDs <- bit64::as.integer64(proteinUniqueIDs[,1])
+    }
   } else {
     proteinUniqueIDs <- bit64::as.integer64(proteinUniqueIDs)
   }
   return(dbGetTable(
     db = db,
-    tableName = "TargetProteinsModificationSites",
-    columnNames = "ModificationSitesId",
+    tablename = "TargetProteinsModificationSites",
+    columns = "ModificationSitesId",
     filtering = paste(c(" WHERE TargetProteinsUniqueSequenceID IN (",
                         paste(c("'",
                                 paste(proteinUniqueIDs,collapse = "','"),
@@ -1160,7 +1175,7 @@ dbGetModificationsSitesIDs <- function(db, proteinUniqueIDs, SQL = FALSE){
                               collapse = ""),
                         ")"),
                       collapse = ""),
-    sortOrder = NA,
+    sortorder = NA,
     SQL = SQL))
 }
 
@@ -1170,9 +1185,9 @@ dbGetModificationsSitesIDs <- function(db, proteinUniqueIDs, SQL = FALSE){
 #' @param db database access 'handle'
 #' @param modificatonSitesIDs the modification site identifiers to get from
 #'  the ModificationSites table
-#' @param columnNames allows the selection of columns to take from the table,
+#' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
-#' @param sortOrder allows for sorting of the selected columns,
+#' @param sortorder allows for sorting of the selected columns,
 #'  default = NA, (no sorting). Other valid values are a single character
 #'  string ("ASC" or "DESC") or a character vector of the same length as the
 #'  columnNames vector containing a series of "ASC" or "DESC"
@@ -1186,24 +1201,24 @@ dbGetModificationsSitesIDs <- function(db, proteinUniqueIDs, SQL = FALSE){
 #' @export
 dbGetModificationsTable <- function(db,
                                     modificatonSitesIDs,
-                                    columnNames = NA,
-                                    sortOrder = NA,
+                                    columns = NA,
+                                    sortorder = NA,
                                     SQL = FALSE){
   if (is.Class(modificatonSitesIDs,"data.frame")){
-    modificatonSitesIDs <- as.character(modificatonSitesIDs$ModificationSitesId)
-  } else {
-    if (!is.character(modificatonSitesIDs)){
-      modificatonSitesIDs <- as.character(modificatonSitesIDs)
+    if ("ModificationSitesId" %in% colnames(modificatonSitesIDs)){
+      modificatonSitesIDs <- modificatonSitesIDs$ModificationSitesId
+    } else {
+      modificatonSitesIDs <- modificatonSitesIDs[,1]
     }
   }
   dbGetTable(
     db = db,
-    tableName = "ModificationSites",
-    columnNames = columnNames,
+    tablename = "ModificationSites",
+    columns = columns,
     filtering = paste(
       c(" WHERE Id IN ",
         "(", paste(modificatonSitesIDs, collapse = ","),")"), collapse = ""),
-    sortOrder = sortOrder,
+    sortorder = sortorder,
     SQL = SQL)
 }
 
@@ -1221,12 +1236,16 @@ dbGetModificationsTable <- function(db,
 #' @export
 dbGetModificationPeptideIDs <- function(db, modificationIDs, SQL = FALSE){
   if (is.Class(modificationIDs,"data.frame")){
-    modificationIDs <- modificationIDs$Id
+    if ("Id" %in% colnames(modificationIDs)){
+      modificationIDs <- modificationIDs$Id
+    } else {
+      modificationIDs <- modificationIDs[,1]
+    }
   } 
   return(dbGetTable(
     db = db,
-    tableName = "TargetPeptideGroupsModificationSites",
-    columnNames = "TargetPeptideGroupsPeptideGroupID",
+    tablename = "TargetPeptideGroupsModificationSites",
+    columns = "TargetPeptideGroupsPeptideGroupID",
     filtering = paste(c(" WHERE ModificationSitesId IN (",
                         paste(c("'",
                                 paste(modificationIDs,collapse = "','"),
@@ -1234,7 +1253,6 @@ dbGetModificationPeptideIDs <- function(db, modificationIDs, SQL = FALSE){
                               collapse = ""),
                         ")"),
                       collapse = ""),
-    sortOrder = NA,
+    sortorder = NA,
     SQL = SQL))
 }
-

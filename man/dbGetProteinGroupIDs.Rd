@@ -11,7 +11,9 @@ dbGetProteinGroupIDs(db, proteinUniqueIDs, SQL = FALSE)
 
 \item{proteinUniqueIDs}{the UniqueSequenceID's for which the proteinGroupID's
 are to be retrieved. Usually these UniqueSequenceID's will come from a
-protein table}
+protein table. Please note that a 'regular' bit64::as.integer64 vector may
+fail due to conversion issues. It is better to pass this type of vector as
+a character vector}
 
 \item{SQL}{allows the function to return the SQL query statement in stead of
 a data.frame#'}

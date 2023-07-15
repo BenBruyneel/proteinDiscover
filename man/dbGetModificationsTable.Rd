@@ -8,8 +8,8 @@
 dbGetModificationsTable(
   db,
   modificatonSitesIDs,
-  columnNames = NA,
-  sortOrder = NA,
+  columns = NA,
+  sortorder = NA,
   SQL = FALSE
 )
 }
@@ -19,10 +19,10 @@ dbGetModificationsTable(
 \item{modificatonSitesIDs}{the modification site identifiers to get from
 the ModificationSites table}
 
-\item{columnNames}{allows the selection of columns to take from the table,
+\item{columns}{allows the selection of columns to take from the table,
 default = NA (all columns)}
 
-\item{sortOrder}{allows for sorting of the selected columns,
+\item{sortorder}{allows for sorting of the selected columns,
 default = NA, (no sorting). Other valid values are a single character
 string ("ASC" or "DESC") or a character vector of the same length as the
 columnNames vector containing a series of "ASC" or "DESC"}

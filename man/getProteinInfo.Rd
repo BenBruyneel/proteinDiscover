@@ -8,21 +8,21 @@
 \usage{
 getProteinInfo(
   db,
-  columnNames = c("Accession", "ProteinGroupIDs", "AbundancesNormalized",
-    "AbundanceRatios", "AbundanceRatioPValue", "AbundanceRatioAdjPValue"),
+  columns = c("Accession", "ProteinGroupIDs", "AbundancesNormalized", "AbundanceRatios",
+    "AbundanceRatioPValue", "AbundanceRatioAdjPValue"),
   proteinAccessions = knockOutProteins()$Accession,
-  sortOrder = "Accession"
+  sortorder = "Accession"
 )
 }
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{columnNames}{allows the selection of columns to take from the table}
+\item{columns}{allows the selection of columns to take from the table}
 
 \item{proteinAccessions}{defines which protein(s) info will be retrieved
 (character vector)}
 
-\item{sortOrder}{allows for sorting of the resulting data.frame by on of it's
+\item{sortorder}{allows for sorting of the resulting data.frame by on of it's
 columns (default = "Accession")}
 }
 \value{

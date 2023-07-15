@@ -2,17 +2,17 @@
 % Please edit documentation in R/workFlows.R
 \name{nodes}
 \alias{nodes}
-\title{function that takes a (xmlToList type) workflow and returns a list of}
+\title{function that takes a (xmlToList type) workflow and returns a list of nodes}
 \usage{
 nodes(
-  Workflow,
+  workflow,
   showHidden = FALSE,
   showAdvanced = TRUE,
   showConfiguration = FALSE
 )
 }
 \arguments{
-\item{Workflow}{a (xmlToList type) workflow}
+\item{workflow}{a (xmlToList type) workflow}
 
 \item{showHidden}{if TRUE then rows with hidden = TRUE are included (default:
 false)}
@@ -28,7 +28,7 @@ a list of named data.frame objects containing all the parameters/
  settings in the nodes of the workflow
 }
 \description{
-function that takes a (xmlToList type) workflow and returns a list of
+function that takes a (xmlToList type) workflow and returns a list of nodes
 }
 \note{
 an example of it's use: (workflowInfo(db))$nodeInfo$Consensus %>%

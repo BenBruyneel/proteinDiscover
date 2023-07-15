@@ -4,12 +4,12 @@
 \alias{dbGetQuanSpectrumIDs}
 \title{get the SpectrumID's from (a set of) PeptideIDs}
 \usage{
-dbGetQuanSpectrumIDs(db, PeptideIDs, SQL = FALSE)
+dbGetQuanSpectrumIDs(db, peptideIDs, SQL = FALSE)
 }
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{PeptideIDs}{the PeptideIDs usually come from the
+\item{peptideIDs}{the PeptideIDs usually come from the
 TargetPsms Table. This can be in numeric or character vector format}
 
 \item{SQL}{allows the function to return the SQL query statement in stead of

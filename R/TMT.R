@@ -133,10 +133,10 @@ tmt10Channels <- function(){
 #'  \code{\link[proteinDiscover]{dbGetTable}}
 #'  
 #' @param db database access 'handle'
-#' @param columnNames allows the selection of columns to take from the table
+#' @param columns allows the selection of columns to take from the table
 #' @param proteinAccessions defines which protein(s) info will be retrieved
 #'  (character vector)
-#' @param sortOrder allows for sorting of the resulting data.frame by on of it's
+#' @param sortorder allows for sorting of the resulting data.frame by on of it's
 #'  columns (default = "Accession")
 #' @param SQL allows the function to return the SQL query statement in stead of
 #'  a data.frame (for debugging purposes)
@@ -145,23 +145,23 @@ tmt10Channels <- function(){
 #'  a character string specifying an SQL query
 #' @export
 getProteinInfoRaw <- function(db,
-                              columnNames = c("Accession",
-                                              "ProteinGroupIDs",
-                                              "AbundancesNormalized",
-                                              "AbundanceRatios",
-                                              "AbundanceRatioPValue",
-                                              "AbundanceRatioAdjPValue"),
+                              columns = c("Accession",
+                                          "ProteinGroupIDs",
+                                          "AbundancesNormalized",
+                                          "AbundanceRatios",
+                                          "AbundanceRatioPValue",
+                                          "AbundanceRatioAdjPValue"),
                               proteinAccessions = knockOutProteins()$Accession,
-                              sortOrder = "Accession",
+                              sortorder = "Accession",
                               SQL = FALSE){
   return(dbGetTable(db = db,
-                    tableName = tableNames("proteins"),
-                    columnNames = columnNames,
+                    tablename = tableNames("proteins"),
+                    columns = columns,
                     filtering = paste(c(" WHERE IsMasterProtein = 0 AND Accession IN ('",
                                         paste(proteinAccessions, collapse = "', '"),
                                         "')"),
                                       collapse = ""),
-                    sortOrder = sortOrder,
+                    sortorder = sortorder,
                     SQL = SQL))
 }
 
@@ -170,10 +170,10 @@ getProteinInfoRaw <- function(db,
 #'  \code{\link{getProteinInfoRaw}}
 #'  
 #' @param db database access 'handle'
-#' @param columnNames allows the selection of columns to take from the table
+#' @param columns allows the selection of columns to take from the table
 #' @param proteinAccessions defines which protein(s) info will be retrieved
 #'  (character vector)
-#' @param sortOrder allows for sorting of the resulting data.frame by on of it's
+#' @param sortorder allows for sorting of the resulting data.frame by on of it's
 #'  columns (default = "Accession")
 #'
 #' @note this function uses the default
@@ -185,18 +185,18 @@ getProteinInfoRaw <- function(db,
 #'  "translation" of the raw columns
 #' @export
 getProteinInfo <- function(db,
-                           columnNames = c("Accession",
-                                           "ProteinGroupIDs",
-                                           "AbundancesNormalized",
-                                           "AbundanceRatios",
-                                           "AbundanceRatioPValue",
-                                           "AbundanceRatioAdjPValue"),
+                           columns = c("Accession",
+                                       "ProteinGroupIDs",
+                                       "AbundancesNormalized",
+                                       "AbundanceRatios",
+                                       "AbundanceRatioPValue",
+                                       "AbundanceRatioAdjPValue"),
                            proteinAccessions = knockOutProteins()$Accession,
-                           sortOrder = "Accession"){
+                           sortorder = "Accession"){
   return(getProteinInfoRaw(db = db,
-                           columnNames = columnNames,
+                           columns = columns,
                            proteinAccessions = proteinAccessions,
-                           sortOrder = sortOrder) %>%
+                           sortorder = sortorder) %>%
            dfTransformRaws())
 }
 
@@ -205,7 +205,7 @@ getProteinInfo <- function(db,
 #'  "translated"
 #'  
 #' @param db database access 'handle'
-#' @param columnNames allows the selection of columns to take from the table. 
+#' @param columns allows the selection of columns to take from the table. 
 #'  The columns: PeptideGroupID, Sequence, Modifications, QuanInfo are
 #'  automatically included. Default column to be retrieved is
 #'  AbundancesNormalized 
@@ -219,28 +219,28 @@ getProteinInfo <- function(db,
 #' @returns a named list of data.frames (the names are the proteinAccessions)
 #' @export
 getPeptideInfoRaw <- function(db,
-                              columnNames = "AbundancesNormalized",
+                              columns = "AbundancesNormalized",
                               addStandardColumns = TRUE,
                               proteinAccessions = knockOutProteins()$Accession){
   ProteinGroupIDs <- unlist(lapply(proteinAccessions,
                                    function(x){
                                      getProteinInfoRaw(db = db,
-                                                       columnNames = c("Accession","ProteinGroupIDs"),
+                                                       columns = c("Accession","ProteinGroupIDs"),
                                                        proteinAccessions = x,
-                                                       sortOrder = NA)$ProteinGroupIDs
+                                                       sortorder = NA)$ProteinGroupIDs
                                    }))
   tempResult <- lapply(ProteinGroupIDs,
                        function(x){
                          dbGetPeptideIDs(db = db, proteinGroupIDs = x) %>%
                            dbGetPeptideTable(db = db,
-                                             columnNames = ifelseProper(addStandardColumns,
-                                                                        append(c("PeptideGroupID",
-                                                                                 "Sequence",
-                                                                                 "Modifications",
-                                                                                 "QuanInfo"),
-                                                                               columnNames),
-                                                                        columnNames),
-                                             sortOrder = c("Sequence",
+                                             columns = ifelseProper(addStandardColumns,
+                                                                    append(c("PeptideGroupID",
+                                                                             "Sequence",
+                                                                             "Modifications",
+                                                                             "QuanInfo"),
+                                                                           columns),
+                                                                        columns) |> unique(),
+                                             sortorder = c("Sequence",
                                                            "Modifications"))
                        })
   names(tempResult) <- proteinAccessions
@@ -251,7 +251,7 @@ getPeptideInfoRaw <- function(db,
 #'  the provided proteinAccession (uniprot) codes. Raw columns are "translated"
 #'  
 #' @param db database access 'handle'
-#' @param columnNames allows the selection of columns to take from the table. 
+#' @param columns allows the selection of columns to take from the table. 
 #'  The columns: PeptideGroupID, Sequence, Modifications, QuanInfo are
 #'  automatically included. Default column to be retrieved is
 #'  AbundancesNormalized
@@ -275,12 +275,12 @@ getPeptideInfoRaw <- function(db,
 #' @returns a named list of data.frames (the names are the proteinAccessions)
 #' @export
 getPeptideInfo <- function(db,
-                           columnNames = "AbundancesNormalized",
+                           columns = "AbundancesNormalized",
                            addStandardColumns = TRUE,
                            proteinAccessions = knockOutProteins()$Accession,
                            removeUnusedQuantInfo = TRUE){
   tempResult <- getPeptideInfoRaw(db = db,
-                                  columnNames = columnNames,
+                                  columns = columns,
                                   addStandardColumns = addStandardColumns,
                                   proteinAccessions = proteinAccessions)
   tempResult <- lapply(tempResult, function(x){
@@ -335,7 +335,7 @@ calcIFIs <- function(db,
                      groups = tmt11Channels(),
                      IFIName = "IFI",
                      calcFunc = mean, calcName = "mean", na.rm = TRUE){
-  data = getPeptideInfo(db = db, columnNames = columns)[[accession]] %>%
+  data = getPeptideInfo(db = db, columns = columns)[[accession]] %>%
     dplyr::select(dplyr::starts_with(paste0(columns,"_")))
   tempGroups <- unique(groups$peptideChannels)
   tempResult <- lapply(tempGroups, function(x){

@@ -14,7 +14,8 @@ dbGetProteinIDs(db, proteinGroupIDs, SQL = FALSE)
 \item{db}{database access 'handle'}
 
 \item{proteinGroupIDs}{the protein group(s) for which the UniqueSequenceID's
-should be retrieved}
+should be retrieved. This can also be a (collpased) character vector where
+the protein groups are separated by ';'}
 
 \item{SQL}{allows the function to return the SQL query statement in stead of
 a data.frame#'}

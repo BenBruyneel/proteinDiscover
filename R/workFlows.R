@@ -1,5 +1,3 @@
-library(stringr)
-library(XML)
 
 #' function that generates the default data.frame for the function
 #' df_replace().  
@@ -330,9 +328,9 @@ nodeNames <- function(Workflow){
   }
 }
 
-#' function that takes a (xmlToList type) workflow and returns a list of 
+#' function that takes a (xmlToList type) workflow and returns a list of nodes
 #' 
-#' @param Workflow a (xmlToList type) workflow
+#' @param workflow a (xmlToList type) workflow
 #' @param showHidden if TRUE then rows with hidden = TRUE are included (default:
 #'  false)
 #' @param showAdvanced if TRUE then rows with advanced = TRUE are included
@@ -347,10 +345,10 @@ nodeNames <- function(Workflow){
 #'  nodes()
 #' 
 #' @export
-nodes <- function(Workflow,
+nodes <- function(workflow,
                   showHidden = FALSE, showAdvanced = TRUE,
                   showConfiguration = FALSE){
-  result <- lapply(Workflow$WorkflowTree, function(x){
+  result <- lapply(workflow$WorkflowTree, function(x){
     resultx <- dplyr::bind_rows(lapply(x$ProcessingNodeParameters, nodeParameters))
     if (ncol(resultx) == 0){
       return(resultx)
@@ -366,7 +364,7 @@ nodes <- function(Workflow,
                              value = "DisplayValue"))
     }
   })
-  names(result) <- nodeNames(Workflow)
+  names(result) <- nodeNames(workflow)
   if (!showHidden){
     result <- lapply(result, function(x){
       if (ncol(x)>0){

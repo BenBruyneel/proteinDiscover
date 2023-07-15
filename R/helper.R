@@ -37,25 +37,27 @@ ifelseProper <- function(logicValue = NULL, ifTrue = NULL, ifFalse = NULL){
 }
 
 #' converts character string date into date/time format
-#' (mdy hms format)
 #' 
 #' @param theDate character string to be converted
 #' (can be vectorized)
+#' @param dateFormat function that defines the output date/time format, default
+#'  is lubridate::mdy_hms
 #' @returns date in mdy hms format
 #' @export
-thermo.date <- function(theDate){
-  return(lubridate::mdy_hms(theDate))
+thermo.date <- function(theDate, dateFormat = lubridate::mdy_hms){
+  return(dateFormat(theDate))
 }
 
 #' converts character string date into date/time format
-#' (ymd hms format)
 #' 
 #' @param theDate character string to be converted
 #' (can be vectorized)
+#' @param dateFormat function that defines the output date/time format, default
+#'  is lubridate::ymd_hms
 #' @returns date 
 #' @export
-system.date <- function(theDate){
-  return(lubridate::ymd_hms(theDate))
+system.date <- function(theDate, dateFormat = lubridate::ymd_hms){
+  return(dateFormat(theDate))
 }
 
 #' fake converter for times when no conversion is wanted/needed
@@ -66,4 +68,23 @@ system.date <- function(theDate){
 #' @export
 na.date <- function(theDate){
   return(theDate)
+}
+
+#' internal helper function to prevent having to remember the somewhat
+#' long names of the most used tables
+#' 
+#' @param whichTable can be either "proteins","peptides","psms" or "consensus"
+#'  character do not need to be lower or upper case (all are converted to upper
+#'  case). If another string is used as a parameter, the function will return
+#'  NA
+#' @return a string containing the protein discoverer table name corresponding
+#'  to the parameter whichTable
+#' @export
+tableNames <- function(whichTable = "proteins"){
+  return(switch(toupper(toString(whichTable)),
+                "PROTEINS"  = "TargetProteins",
+                "PEPTIDES"  = "TargetPeptideGroups",
+                "PSMS"      = "TargetPsms",
+                "CONSENSUS" = "ConsensusFeatures",
+                NA))
 }

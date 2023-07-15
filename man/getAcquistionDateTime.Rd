@@ -8,7 +8,7 @@
 getAcquistionDateTime(
   db,
   useAmPm = TRUE,
-  format = ifelse(useAmPm, "\%m/\%d/\%Y \%I:\%M:\%S \%p", "\%m/\%d/\%Y \%H:\%M:\%S")
+  format = ifelse(useAmPm, "\%m/\%d/\%Y \%I:\%M:\%S \%p", "\%m/\%d/\%Y \%H:\%M:\%S \%p")
 )
 }
 \arguments{

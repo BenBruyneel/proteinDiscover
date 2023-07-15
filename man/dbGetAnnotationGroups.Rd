@@ -7,18 +7,18 @@
 \usage{
 dbGetAnnotationGroups(
   db,
-  ProteinAnnotationGroupIDs = NA,
-  columnNames = NA,
+  proteinAnnotationGroupIDs = NA,
+  columns = NA,
   SQL = FALSE
 )
 }
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{ProteinAnnotationGroupIDs}{the protein annotation group ID's for which
+\item{proteinAnnotationGroupIDs}{the protein annotation group ID's for which
 to get information}
 
-\item{columnNames}{allows the selection of columns to take from the table,
+\item{columns}{allows the selection of columns to take from the table,
 default = NA (all columns)}
 
 \item{SQL}{allows the function to return the SQL query statement in stead of

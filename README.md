@@ -12,10 +12,9 @@ Install with the command:
 
 devtools::install_github("BenBruyneel/proteinDiscover")
 
-Latest update (v0.8.0) : finally the package has tests to help development & checking for problems due to eg dependency updates
-
-Currently I'm looking into making the naming of function arguments etc a bit more consistent throughout the entire package
+Latest update (v0.9.0) : revisited all functions and attempted to make argument names etc more consistent. Please note that this can have consequences for older code using these functions
 
 Work in progress!
 
-October, 21st 2022
+July, 15th 2023
+

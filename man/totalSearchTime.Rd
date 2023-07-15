@@ -4,10 +4,12 @@
 \alias{totalSearchTime}
 \title{get the total search time  from the database}
 \usage{
-totalSearchTime(db)
+totalSearchTime(db, SQL = FALSE)
 }
 \arguments{
 \item{db}{database access 'handle'}
+
+\item{SQL}{allows the function to return the SQL query statement used}
 }
 \value{
 numeric: search time in seconds

@@ -7,12 +7,12 @@
  \code{\link{dbGetAnnotatedProteins}}. The output of this function can serve
  as the input for \code{\link{dbGetAnnotationGroups}}}
 \usage{
-dbGetProteinAnnotationGroupIDs(db, UniqueSequenceIDs, SQL = FALSE)
+dbGetProteinAnnotationGroupIDs(db, uniqueSequenceIDs, SQL = FALSE)
 }
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{UniqueSequenceIDs}{the UniqueSequenceID's (unique protein identifier),
+\item{uniqueSequenceIDs}{the UniqueSequenceID's (unique protein identifier),
 usually coming from protein table}
 
 \item{SQL}{allows the function to return the SQL query statement in stead of

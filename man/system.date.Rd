@@ -2,19 +2,20 @@
 % Please edit documentation in R/helper.R
 \name{system.date}
 \alias{system.date}
-\title{converts character string date into date/time format
-(ymd hms format)}
+\title{converts character string date into date/time format}
 \usage{
-system.date(theDate)
+system.date(theDate, dateFormat = lubridate::ymd_hms)
 }
 \arguments{
 \item{theDate}{character string to be converted
 (can be vectorized)}
+
+\item{dateFormat}{function that defines the output date/time format, default
+is lubridate::ymd_hms}
 }
 \value{
 date
 }
 \description{
 converts character string date into date/time format
-(ymd hms format)
 }

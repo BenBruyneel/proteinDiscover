@@ -4,10 +4,10 @@
 \alias{dbOpen}
 \title{Wrapper around pool::dbPool(): opens a database}
 \usage{
-dbOpen(fileName, drv = RSQLite::SQLite(), ...)
+dbOpen(filename, drv = RSQLite::SQLite(), ...)
 }
 \arguments{
-\item{fileName}{a character vector specifying the name and location
+\item{filename}{a character vector specifying the name and location
 of the database}
 
 \item{drv}{defines database connection type, default = RSQLite::SQLite()}

@@ -2,19 +2,20 @@
 % Please edit documentation in R/helper.R
 \name{thermo.date}
 \alias{thermo.date}
-\title{converts character string date into date/time format
-(mdy hms format)}
+\title{converts character string date into date/time format}
 \usage{
-thermo.date(theDate)
+thermo.date(theDate, dateFormat = lubridate::mdy_hms)
 }
 \arguments{
 \item{theDate}{character string to be converted
 (can be vectorized)}
+
+\item{dateFormat}{function that defines the output date/time format, default
+is lubridate::mdy_hms}
 }
 \value{
 date in mdy hms format
 }
 \description{
 converts character string date into date/time format
-(mdy hms format)
 }

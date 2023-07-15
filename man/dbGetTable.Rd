@@ -6,26 +6,26 @@
 \usage{
 dbGetTable(
   db,
-  tableName,
-  columnNames = NA,
+  tablename,
+  columns = NA,
   filtering = " ",
-  sortOrder = NA,
+  sortorder = NA,
   SQL = FALSE
 )
 }
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{tableName}{used to pass on the name of the table containing the data}
+\item{tablename}{used to pass on the name of the table containing the data}
 
-\item{columnNames}{allows the selection of columns to take from the table,
+\item{columns}{allows the selection of columns to take from the table,
 default = NA (all columns)}
 
 \item{filtering}{allows for " WHERE <expression>" additions to the SQL
 statement default = " " (no filtering). Note: always put a space (" ")
 before any statement}
 
-\item{sortOrder}{allows for sorting of the selected columns,
+\item{sortorder}{allows for sorting of the selected columns,
 default = NA, (no sorting). Other valid value is a character character
 vector of columnNames to be used for sorting string (with "ASC" or "DESC"
 if needed)}

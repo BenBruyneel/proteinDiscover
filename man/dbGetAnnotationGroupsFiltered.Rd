@@ -9,8 +9,8 @@
 \usage{
 dbGetAnnotationGroupsFiltered(
   db,
-  columnNames = NA,
-  GroupAnnotationAccession = NA,
+  columns = NA,
+  groupAnnotationAccession = NA,
   description = NA,
   UpperCase = FALSE,
   LowerCase = FALSE,
@@ -23,10 +23,10 @@ dbGetAnnotationGroupsFiltered(
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{columnNames}{allows the selection of columns to take from the table,
+\item{columns}{allows the selection of columns to take from the table,
 default = NA (all columns)}
 
-\item{GroupAnnotationAccession}{identification of the annotation, usually
+\item{groupAnnotationAccession}{identification of the annotation, usually
 something like GO:....  (gene ontology) or pF.... (protein family). Note
 that when this argument is not NAm the arguments dealing with description
 etc are ignored}

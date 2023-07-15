@@ -4,12 +4,12 @@
 \alias{dbGetPsmIDs}
 \title{get the PsmID's from (a set of) PeptideGroupIDs}
 \usage{
-dbGetPsmIDs(db, PeptideGroupIDs, SQL = FALSE)
+dbGetPsmIDs(db, peptideGroupIDs, SQL = FALSE)
 }
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{PeptideGroupIDs}{the PeptideGroupIDs usually come from the
+\item{peptideGroupIDs}{the PeptideGroupIDs usually come from the
 TargetPeptideGroups Table. This can be in numeric or character vector format}
 
 \item{SQL}{allows the function to return the SQL query statement in stead of

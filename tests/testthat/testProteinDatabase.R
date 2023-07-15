@@ -2,10 +2,10 @@
 test_that("dbGetTable works",{
   testingDB <- openTest(testfile = 1)
   dftest <- dbGetTable(db = testingDB,
-                       tableName = "TargetProteins", SQL = T)
-  expect_equal(dftest, "SELECT * FROM TargetProteins ")
+                       tablename = "TargetProteins", SQL = T)
+  expect_equal(dftest, "SELECT * FROM TargetProteins")
   dftest <- dbGetTable(db = testingDB,
-                       tableName = "TargetProteins", SQL = F)
+                       tablename = "TargetProteins", SQL = F)
   expect_equal(nrow(dftest), 20)
   expect_equal(ncol(dftest), 64)
   # column names that have 'Abundance' in them
@@ -77,7 +77,7 @@ test_that("dbGetProteinTable works",{
                            testdf$UniqueSequenceID[1:2],
                            columns = "Accession", SQL = T)
   expect_equal(testSQL,
-               "SELECT Accession FROM TargetProteins WHERE UniqueSequenceID IN ('-9183054829930716487','-8166449411917027120') ")
+               "SELECT Accession FROM TargetProteins WHERE UniqueSequenceID IN ('-9183054829930716487','-8166449411917027120')")
   testdf <- dbGetProteins(testingDB,
                           testdf$UniqueSequenceID[1:2],
                           columns = "Accession",
@@ -88,17 +88,17 @@ test_that("dbGetProteinTable works",{
 
 test_that("dbGetProteinFiltered works", {
   testingDB <- openTest(testfile = 1)
-  testSQL <- dbGetProteinFiltered(testingDB, columnNames = "Accession",
+  testSQL <- dbGetProteinFiltered(testingDB, columns = "Accession",
                                   filtering = " Accession = 'P06634'", SQL = T)
   expect_equal(testSQL,
-               "SELECT Accession FROM TargetProteins WHERE    Accession = 'P06634' ")
-  testSQL <- dbGetProteinFiltered(tesingDB, columnNames = "Accession",
+               "SELECT Accession FROM TargetProteins WHERE    Accession = 'P06634'")
+  testSQL <- dbGetProteinFiltered(tesingDB, columns = "Accession",
                                   filtering = "(Accession = 'P06634' OR Accession = 'P39935')",
                                   masterProtein = TRUE,
                                   SQL = T)
   expect_equal(testSQL,
-               "SELECT Accession FROM TargetProteins WHERE  IsMasterProtein = 0 AND (Accession = 'P06634' OR Accession = 'P39935') ")
-  testdf <- dbGetProteinFiltered(testingDB, columnNames = "Accession",
+               "SELECT Accession FROM TargetProteins WHERE  IsMasterProtein = 0 AND (Accession = 'P06634' OR Accession = 'P39935')")
+  testdf <- dbGetProteinFiltered(testingDB, columns = "Accession",
                                  filtering = " Accession = 'P06634'", SQL = F)
   expect_equal(testdf$Accession, "P06634")
   testdf <- dbGetProteinFiltered(testingDB,
@@ -116,7 +116,7 @@ test_that("dbGetProteinUniqueSequenceUDs works",{
                                            accession = c("P06634","P39935"),
                                            SQL = T)
   expect_equal(testSQL,
-               "SELECT UniqueSequenceID FROM TargetProteins WHERE   Accession IN ('P06634','P39935') ")
+               "SELECT UniqueSequenceID FROM TargetProteins WHERE   Accession IN ('P06634','P39935')")
   testdf <- dbGetProteinUniqueSequenceIDs(testingDB,
                                           accession = c("P06634","P39935"),
                                           SQL = F)
@@ -173,7 +173,7 @@ test_that("dbGetProteinAnnotationGroupIDs works",{
   testingDB <- openTest(testfile = 1)
   testResult <- dbGetProteinAnnotationGroupIDs(
     db = testingDB,
-    UniqueSequenceIDs = c("9147706995934957525",
+    uniqueSequenceIDs = c("9147706995934957525",
                          "-2768548653852576336",
                          "3069497284891092343",
                          "3649982194632465886",
@@ -186,7 +186,7 @@ test_that("dbGetProteinAnnotationGroupIDs works",{
 test_that("dbGetAnnotatedProteins works",{
   testingDB <- openTest(testfile = 1)
   testResult <- dbGetAnnotatedProteins(db = testingDB,
-                                       ProteinAnnotationGroupIDs = c(264,
+                                       proteinAnnotationGroupIDs = c(264,
                                                                      14,
                                                                      1016,
                                                                      14475),
@@ -205,7 +205,7 @@ test_that("dbGetAnnotatedProteins works",{
 test_that("dbGetAnnotationGroups works",{
   testingDB <- openTest(testfile = 1)
   testResult <- dbGetAnnotationGroups(db = testingDB,
-                                       ProteinAnnotationGroupIDs = c(264,
+                                       proteinAnnotationGroupIDs = c(264,
                                                                      14,
                                                                      1016,
                                                                      14475),
@@ -218,7 +218,7 @@ test_that("dbGetAnnotationGroupsFiltered works",{
   testingDB <- openTest(testfile = 1)
   testResult <- dbGetAnnotationGroupsFiltered(
     db = testingDB,
-    GroupAnnotationAccession = "Pf03856",
+    groupAnnotationAccession = "Pf03856",
     SQL = F)
   expect_equal(testResult$ProteinAnnotationGroupID[1], 264)
   expect_equal(testResult$GroupAnnotationAccession[1], "Pf03856")
@@ -243,7 +243,7 @@ test_that("dbGetPeptideIDs works",{
 test_that("dbGetPeptideTable works",{
   testingDB <- openTest(testfile = 1)
   testResult <- dbGetPeptideTable(db = testingDB,
-                                  PeptideIDs = c(117, 222))
+                                  peptideIDs = c(117, 222))
   expect_equal(testResult$Sequence, c("ACVVYGGSPIGNQLR",
                                       "AEIAIFGVPEDPNFQSSGINFDNYDDIPVDASGK"))
   closeTest(testingDB)
@@ -251,7 +251,7 @@ test_that("dbGetPeptideTable works",{
 
 test_that("dbGetPPsmIDs works",{
   testingDB <- openTest(testfile = 1)
-  testResult <- dbGetPsmIDs(db = testingDB, PeptideGroupIDs = 222)[,1]
+  testResult <- dbGetPsmIDs(db = testingDB, peptideGroupIDs = 222)[,1]
   expect_equal(testResult, c(145617, 145484))
   closeTest(testingDB)
 })
@@ -259,7 +259,7 @@ test_that("dbGetPPsmIDs works",{
 test_that("dbGetPsmTable works",{
   testingDB <- openTest(testfile = 1)
   testResult <- dbGetPsmTable(db = testingDB,
-                                  PsmIDs = c(145617, 145484))
+                                  psmIDs = c(145617, 145484))
   expect_equal(testResult$ModifiedSequence,
                rep("[K].aEIAIFGVPEDPNFQSSGINFDNYDDIPVDASGk.[D]", 2))
   closeTest(testingDB)
@@ -268,9 +268,9 @@ test_that("dbGetPsmTable works",{
 test_that("dbGetConsensusIDs works",{
   testingDB <- openTest(testfile = 2)
   testResult <- dbGetPeptideTable(db = testingDB,
-                                  columnNames = "PeptideGroupID")
+                                  columns = "PeptideGroupID")
   testResult <- dbGetConsensusIDs(db = testingDB,
-                                  PeptideGroupIDs = testResult$PeptideGroupID[1:10])[,1]
+                                  peptideGroupIDs = testResult$PeptideGroupID[1:10])[,1]
   expect_equal(testResult, c(98998, 140321, 99103, 34100, 128968, 108655,
                              132644, 5748, 69090, 54585, 140583))
   closeTest(testingDB)
@@ -279,7 +279,7 @@ test_that("dbGetConsensusIDs works",{
 test_that("dbGetConsensusTable works",{
   testingDB <- openTest(testfile = 2)
   testResult <- dbGetConsensusTable(db = testingDB,
-                                    ConsensusIDs = c(98998, 140321, 99103,
+                                    consensusIDs = c(98998, 140321, 99103,
                                                      34100, 128968, 108655,
                                                      132644, 5748, 69090,
                                                      54585, 140583))
@@ -291,9 +291,9 @@ test_that("dbGetConsensusTable works",{
 test_that("dbGetQuanSpectrumIDs works",{
   testingDB <- openTest(testfile = 1)
   testResult <- dbGetPsmTable(db = testingDB,
-                              columnNames = "PeptideID")
+                              columns = "PeptideID")
   testResult <- dbGetQuanSpectrumIDs(db = testingDB,
-                                     PeptideIDs = testResult$PeptideID[1:10])[,1]
+                                     peptideIDs = testResult$PeptideID[1:10])[,1]
   expect_equal(testResult, c(28735, 28899, 28965, 29026,
                              29332, 29420, 29513, 29521, 29605, 29668))
   closeTest(testingDB)
@@ -303,7 +303,7 @@ test_that("dbGetQuanSpectrumInfoTable works",{
   testingDB <- openTest(testfile = 1)
   testResult <- dbGetQuanSpectrumInfoTable(
     db = testingDB,
-    SpectrumIDs = c(28735, 28899, 28965, 29026,
+    spectrumIDs = c(28735, 28899, 28965, 29026,
                     29332, 29420, 29513, 29521, 29605, 29668))
   expect_equal(dim(testResult), c(10, 33))
   expect_equal(sum(testResult$Charge), 22)
@@ -314,7 +314,7 @@ test_that("dbGetQuanSpectrumInfoTable works",{
 test_that("dbGetModificationsSitesID works",{
   testingDB <- openTest(testfile = 2)
   testResult <- dbGetProteinTable(db = testingDB,
-                                  columnNames = "UniqueSequenceID")
+                                  columns = "UniqueSequenceID")
   testResult <- dbGetModificationsSitesIDs(db = testingDB,
                                            proteinUniqueIDs = testResult$UniqueSequenceID[1:10])[,1]
   expect_equal(testResult, c(288, 289, 290, 291, 3069, 3070, 3071, 3072, 3073,

@@ -10,7 +10,10 @@ dbGetProteins(db, UniqueSequenceIDs, columns = NA, SQL = FALSE)
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{UniqueSequenceIDs}{specifies from which proteins to get info}
+\item{UniqueSequenceIDs}{character vector that specifies for which proteins
+to get info. Please note that in the 'TargetProteins' table the column
+'UniqueSequenceID' is integer64 class. To prevent issues these values should
+be converted to character vector(s).}
 
 \item{columns}{character vector, specifies which columns to retrieve}
 

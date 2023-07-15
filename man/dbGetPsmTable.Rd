@@ -6,10 +6,10 @@
 \usage{
 dbGetPsmTable(
   db,
-  PsmIDs = NA,
-  columnNames = NA,
+  psmIDs = NA,
+  columns = NA,
   masterProtein = TRUE,
-  sortOrder = NA,
+  sortorder = NA,
   filtering = "MasterProteinAccessions IS NOT NULL",
   SQL = FALSE
 )
@@ -17,17 +17,17 @@ dbGetPsmTable(
 \arguments{
 \item{db}{database access 'handle'}
 
-\item{PsmIDs}{the PsmIDs to be retrieved. This can be in numeric or
+\item{psmIDs}{the PsmIDs to be retrieved. This can be in numeric or
 character vector format OR the output from the dbGetPsmIDs function
 (a data.frame with column "TargetPsmsPeptideID")}
 
-\item{columnNames}{allows the selection of columns to take from the table,
+\item{columns}{allows the selection of columns to take from the table,
 default = NA (all columns)}
 
 \item{masterProtein}{use the IsMasterProtein column to be zero,
 default == TRUE. If more advanced filtering is needed, use db_getTable()}
 
-\item{sortOrder}{allows for sorting of the selected columns,
+\item{sortorder}{allows for sorting of the selected columns,
 default = NA, (no sorting). Other valid values are a single character
 string ("ASC" or "DESC") or a character vector of the same length as the
 columnNames vector containing a series of "ASC" or "DESC"}

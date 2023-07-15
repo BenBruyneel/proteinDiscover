@@ -1,6 +1,3 @@
-library(stringr)
-library(XML)
-
 #' internal function that transforms/transposes a set of named lists into a
 #'  data.frame with the list names as column names
 #'  
@@ -47,7 +44,7 @@ intoTable <- function(xmlList, elementName = NA, leaveOut = ".attrs"){
 analysisDefinition <- function(db){
   return(XML::xmlToList((
     dbGetTable(db = db,
-               tableName = "AnalysisDefinition"))$AnalysisDefinitionXML[1]))
+               tablename = "AnalysisDefinition"))$AnalysisDefinitionXML[1]))
 }
 
 #' function that extracts the factors used in the study to generate the
