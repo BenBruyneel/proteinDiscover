@@ -7,6 +7,7 @@
 dbGetPsmTable(
   db,
   psmIDs = NA,
+  peptideGroupIDs = NA,
   columns = NA,
   masterProtein = TRUE,
   sortorder = NA,
@@ -20,6 +21,12 @@ dbGetPsmTable(
 \item{psmIDs}{the PsmIDs to be retrieved. This can be in numeric or
 character vector format OR the output from the dbGetPsmIDs function
 (a data.frame with column "TargetPsmsPeptideID")}
+
+\item{peptideGroupIDs}{the PeptideGroupIDs usually come from the
+TargetPeptideGroups Table. This can be in numeric or character vector format
+Note: if this parameter is not NA, then psmIDs will be ignored. This
+makes it possible to retrieve the psm info belonging to a peptide w/o first
+having to retrieve toe psm ID's}
 
 \item{columns}{allows the selection of columns to take from the table,
 default = NA (all columns)}

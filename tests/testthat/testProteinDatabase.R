@@ -179,7 +179,7 @@ test_that("dbGetProteinAnnotationGroupIDs works",{
                          "3649982194632465886",
                          "6611310638582806557" ),
     SQL = F)[,1]
-  expect_equal(sum(testResult), 97535)
+  expect_equal(sum(testResult), 642169)
   closeTest(testingDB)
 })
 
@@ -193,12 +193,13 @@ test_that("dbGetAnnotatedProteins works",{
                                 SQL = F)[,1]
   testResult <- as.character(testResult)
   expect_equal(testResult, c("-9183054829930716487",
-                             "-2768548653852576336",
-                             "-2768548653852576336",
-                             "-2768548653852576336",
-                             "-2768548653852576336",
+                             "-8166449411917027120",
+                             "-5974306765773997050",
+                             "-2051302152036108770",
                              "-1452154832651305000",
-                             "8728445636032077830" ))
+                             "-635082257874195660",
+                             "3069497284891092343",
+                             "4093177069699858524"))
   closeTest(testingDB)
 })
 
@@ -343,5 +344,48 @@ test_that("dbGetModificationPeptideIDs works",{
                         3074, 3075, 3076, 3077, 7584, 7715, 7716, 7717,
                         7718))[,1]
   expect_equal(sum(testResult), 796078)
+  closeTest(testingDB)
+})
+
+test_that("dbGetMSnSpectrumInfo works",{
+  testingDB <- openTest(testfile = 1)
+  testResult <- dbGetPsmTable(db = testingDB,
+                              columns = "PeptideID")
+  testResult <- dbGetMSnSpectrumInfo(db = testingDB,
+                                     peptideID = testResult)
+  expect_equal(testResult$ScanNumbers[1:10],
+               c("3705","3943","4044","4142","4594","4712","4836","4846","4961","5061"))
+  expect_equal(nrow(testResult), 563)
+  closeTest(testingDB)
+})
+
+test_that("dbGetMSnSpectrumInfo works",{
+  testingDB <- openTest(testfile = 1)
+  testResult <- dbGetPsmTable(db = testingDB,
+                              columns = "PeptideID")
+  testResult <- dbGetMassSpectrumItems(db = testingDB,
+                                       peptideID = testResult)
+  expect_equal(nrow(testResult), 563)
+  closeTest(testingDB)
+})
+
+test_that("Spectrum routines work",{
+  testingDB <- openTest(testfile = 1)
+  testResult <- dbGetPsmTable(db = testingDB,
+                              columns = "PeptideID")
+  testResult <- dbGetMassSpectrumItems(db = testingDB,
+                                       peptideID = testResult)
+  testSp1 <- transformSpectrumRaw(testResult$Spectrum[[1]])
+  testSp2 <- transformSpectrumRaw(testResult$Spectrum[[100]])
+  expect_equal(names(testSp1), c('Header','ScanEvent','PrecursorInfo','PeakCentroids','ProfilePoints'))
+  expect_equal(names(testSp2), c('Header','ScanEvent','PrecursorInfo','PeakCentroids','ProfilePoints'))
+  expect_equal(spectrum.header(testSp1)$DataType, "Centroid")
+  expect_equal(spectrum.scanEvent(testSp2)$ResolutionAtMass200, "45000")
+  expect_equal(nrow(spectrum.centroid(testSp1)),85)
+  expect_equal(colnames(spectrum.centroid((testSp1))), c('mz','intensity','charge','resolution','signalToNoise'))
+  expect_equal(nrow(spectrum.centroid((testSp2))), 172)
+  expect_equal(nrow(spectrum.precursor.centroid(testSp1)), 21)
+  expect_equal(colnames(spectrum.precursor.centroid(testSp1)), c('mz','intensity','charge','resolution','signalToNoise'))
+  expect_equal(spectrum.precursor.additionalInfo(testSp2)$Charge, "2")
   closeTest(testingDB)
 })

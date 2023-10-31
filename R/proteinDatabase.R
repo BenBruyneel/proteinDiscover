@@ -745,12 +745,17 @@ dbGetPeptideIDs <- function(db, proteinGroupIDs, SQL = FALSE){
     SQL = SQL))
 }
 
-#' get the paptide table belonging defined by PeptideIDs
+#' get the paptide table belonging defined by PeptideIDs ot proteinGroupIDs
 #'
 #' @param db database access 'handle'
 #' @param peptideIDs the peptideIDs to be retrieved. This can be in numeric or
 #'  character vector format OR the output from the dbGetPeptideIDs function
 #'  (a data.frame with column "TargetPeptideGroupsPeptideGroupID")
+#' @param proteinGroupIDs the proteinGroupIDs usually come from the
+#'  TargetProtein Table. This can be in numeric or character vector format.
+#'  Note: if this parameter is not NA, then peptideIDs will be ignored. This
+#'  makes it possible to retrieve the peptides belonging to a protein w/o first
+#'  having to retrieve toe Peptide ID's
 #' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
@@ -766,46 +771,76 @@ dbGetPeptideIDs <- function(db, proteinGroupIDs, SQL = FALSE){
 #' @export
 dbGetPeptideTable <- function(db,
                               peptideIDs = NA,
+                              proteinGroupIDs = NA,
                               columns = NA,
                               masterProtein = TRUE,
                               sortorder = NA,
                               SQL = FALSE){
-  if (identical(peptideIDs,NA)){
-    return(
-      dbGetTable(
-        db = db,
-        tablename = tableNames("peptides"),
-        columns = columns,
-        filtering = paste(
-          c(" WHERE PeptideGroupID IN ",
-            "(SELECT TargetPeptideGroupsPeptideGroupID FROM ",
-            "TargetProteinGroupsTargetPeptideGroups WHERE ",
-            "TargetProteinGroupsProteinGroupID IN (SELECT ",
-            "ProteinGroupIDs FROM TargetProteins ",
-            ifelse(masterProtein,
-                   "WHERE IsMasterProtein = 0",""),
-            "))"),
-          collapse = ""),
-        sortorder = sortorder,
-        SQL = SQL)
-    )
-  } else {
-    if (is.Class(peptideIDs,"data.frame")){
-      # if so then assumed to be output from dbGetPeptideIDs
-      if ("TargetPeptideGroupsPeptideGroupID" %in% colnames(peptideIDs))
-      peptideIDs <- peptideIDs$TargetPeptideGroupsPeptideGroupID
+  if (!identical(proteinGroupIDs, NA)){
+    if (is.Class(proteinGroupIDs,"data.frame")){
+      # if so then assumed to be output from dbGetProteinTable
+      # for speed set columns = "ProteinGroupID"
+      if ("ProteinGroupIDs" %in% colnames(proteinGroupIDs)){
+        proteinGroupIDs <-
+          proteinGroupIDs$ProteinGroupIDs
+      } else {
+        proteinGroupIDs <- proteinGroupIDs[,1]
+      }
     }
-    return(
-      dbGetTable(
-        db = db,
-        tablename = tableNames("peptides"),
-        columns = columns,
-        filtering = paste(
-          c(" WHERE PeptideGroupID IN ",
-            "(", paste(peptideIDs, collapse = ","),")"), collapse = ""),
-        sortorder = sortorder,
-        SQL = SQL)
-    )
+    return(dbGetTable(
+      db = db,
+      tablename = tableNames("peptides"),
+      columns = columns,
+      filtering = paste(c(" WHERE PeptideGroupID IN ",
+                          "(SELECT TargetPeptideGroupsPeptideGroupID FROM",
+                          " TargetProteinGroupsTargetPeptideGroups WHERE ",
+                          "TargetProteinGroupsProteinGroupID IN (",
+                          paste(c("'",
+                                  paste(proteinGroupIDs,collapse = "','"),
+                                  "'"),
+                                collapse = ""),
+                          "))"),
+                        collapse = ""),
+      sortorder = NA,
+      SQL = SQL))
+  } else {
+    if (identical(peptideIDs,NA)){
+      return(
+        dbGetTable(
+          db = db,
+          tablename = tableNames("peptides"),
+          columns = columns,
+          filtering = paste(
+            c(" WHERE PeptideGroupID IN ",
+              "(SELECT TargetPeptideGroupsPeptideGroupID FROM ",
+              "TargetProteinGroupsTargetPeptideGroups WHERE ",
+              "TargetProteinGroupsProteinGroupID IN (SELECT ",
+              "ProteinGroupIDs FROM TargetProteins ",
+              ifelse(masterProtein,
+                     "WHERE IsMasterProtein = 0",""),
+              "))"),
+            collapse = ""),
+          sortorder = sortorder,
+          SQL = SQL)
+      )
+    } else {
+      if (is.Class(peptideIDs,"data.frame")){
+        # if so then assumed to be output from dbGetPeptideIDs
+        if ("TargetPeptideGroupsPeptideGroupID" %in% colnames(peptideIDs))
+        peptideIDs <- peptideIDs$TargetPeptideGroupsPeptideGroupID
+      }
+      return(
+        dbGetTable(
+          db = db,
+          tablename = tableNames("peptides"),
+          columns = columns,
+          filtering = paste(
+            c(" WHERE PeptideGroupID IN ",
+              "(", paste(peptideIDs, collapse = ","),")"), collapse = ""),
+          sortorder = sortorder,
+          SQL = SQL)
+      )
+    }
   }
 }
 
@@ -850,6 +885,11 @@ dbGetPsmIDs <- function(db, peptideGroupIDs, SQL = FALSE){
 #' @param psmIDs the PsmIDs to be retrieved. This can be in numeric or
 #'  character vector format OR the output from the dbGetPsmIDs function
 #'  (a data.frame with column "TargetPsmsPeptideID")
+#' @param peptideGroupIDs the PeptideGroupIDs usually come from the
+#'  TargetPeptideGroups Table. This can be in numeric or character vector format
+#'  Note: if this parameter is not NA, then psmIDs will be ignored. This
+#'  makes it possible to retrieve the psm info belonging to a peptide w/o first
+#'  having to retrieve toe psm ID's
 #' @param columns allows the selection of columns to take from the table,
 #'  default = NA (all columns)
 #' @param masterProtein use the IsMasterProtein column to be zero,
@@ -869,57 +909,84 @@ dbGetPsmIDs <- function(db, peptideGroupIDs, SQL = FALSE){
 #' @export
 dbGetPsmTable <- function(db,
                           psmIDs = NA,
+                          peptideGroupIDs = NA,
                           columns = NA,
                           masterProtein = TRUE,
                           sortorder = NA,
                           filtering = "MasterProteinAccessions IS NOT NULL",
                           SQL = FALSE){
-  if (identical(psmIDs,NA)){
-    return(
-      dbGetTable(
-        db = db,
-        tablename = tableNames("psms"),
-        columns = columns,
-        filtering = paste(
-          c(" WHERE PeptideID IN ",
-            "(SELECT TargetPsmsPeptideID FROM TargetPsmsTargetPeptideGroups",
-            " WHERE TargetPeptideGroupsPeptideGroupID IN ",
-            "(SELECT PeptideGroupID FROM TargetPeptideGroups",
-            " WHERE PeptideGroupID IN ",
-            "(SELECT TargetPeptideGroupsPeptideGroupID FROM ",
-            "TargetProteinGroupsTargetPeptideGroups WHERE ",
-            "TargetProteinGroupsProteinGroupID IN (SELECT ",
-            "ProteinGroupIDs FROM TargetProteins ",
-            ifelse(masterProtein,
-                   "WHERE IsMasterProtein = 0",""),
-            ")))) AND MasterProteinAccessions IS NOT NULL"),
-          collapse = ""),
-        sortorder = sortorder,
-        SQL = SQL)
-    )
-  } else {
-    if (is.Class(psmIDs,"data.frame")){
-      if ("TargetPsmsPeptideID" %in% colnames(psmIDs)){
-        psmIDs <- psmIDs$TargetPsmsPeptideID
+  if (!identical(peptideGroupIDs, NA)){
+    if (is.Class(peptideGroupIDs,"data.frame")){
+      if ("PeptideGroupID" %in% colnames(peptideGroupIDs)){
+        peptideGroupIDs <- peptideGroupIDs$PeptideGroupID
       } else {
-        psmIDs <- psmIDs[,1]
+        peptideGroupIDs <- peptideGroupIDs[,1]
       }
     }
-    return(
-      dbGetTable(
-        db = db,
-        tablename = tableNames("psms"),
-        columns = columns,
-        filtering = paste(
-          c(" WHERE PeptideID IN ",
-            "(", paste(psmIDs, collapse = ","),")",
-            ifelse(is.na(filtering),
-                   "",
-                   paste(c(" AND ", filtering), collapse =""))),
+    return(dbGetTable(
+      db = db,
+      tablename = tableNames("psms"),
+      columns = columns,
+      filtering = paste(c(" WHERE PeptideID IN ",
+                          " (SELECT TargetPsmsPeptideID FROM TargetPsmsTargetPeptideGroups",
+                          " WHERE TargetPeptideGroupsPeptideGroupID IN (",
+                          paste(c("'",
+                                  paste(peptideGroupIDs, collapse = "','"),
+                                  "'"),
+                                collapse = ""),
+                          "))"),
+                        collapse = ""),
+      sortorder = NA,
+      SQL = SQL))
+    
+  } else {
+    if (identical(psmIDs,NA)){
+      return(
+        dbGetTable(
+          db = db,
+          tablename = tableNames("psms"),
+          columns = columns,
+          filtering = paste(
+            c(" WHERE PeptideID IN ",
+              "(SELECT TargetPsmsPeptideID FROM TargetPsmsTargetPeptideGroups",
+              " WHERE TargetPeptideGroupsPeptideGroupID IN ",
+              "(SELECT PeptideGroupID FROM TargetPeptideGroups",
+              " WHERE PeptideGroupID IN ",
+              "(SELECT TargetPeptideGroupsPeptideGroupID FROM ",
+              "TargetProteinGroupsTargetPeptideGroups WHERE ",
+              "TargetProteinGroupsProteinGroupID IN (SELECT ",
+              "ProteinGroupIDs FROM TargetProteins ",
+              ifelse(masterProtein,
+                     "WHERE IsMasterProtein = 0",""),
+              ")))) AND MasterProteinAccessions IS NOT NULL"),
             collapse = ""),
-        sortorder = sortorder,
-        SQL = SQL)
-    )
+          sortorder = sortorder,
+          SQL = SQL)
+      )
+    } else {
+      if (is.Class(psmIDs,"data.frame")){
+        if ("TargetPsmsPeptideID" %in% colnames(psmIDs)){
+          psmIDs <- psmIDs$TargetPsmsPeptideID
+        } else {
+          psmIDs <- psmIDs[,1]
+        }
+      }
+      return(
+        dbGetTable(
+          db = db,
+          tablename = tableNames("psms"),
+          columns = columns,
+          filtering = paste(
+            c(" WHERE PeptideID IN ",
+              "(", paste(psmIDs, collapse = ","),")",
+              ifelse(is.na(filtering),
+                     "",
+                     paste(c(" AND ", filtering), collapse =""))),
+              collapse = ""),
+          sortorder = sortorder,
+          SQL = SQL)
+      )
+    }
   }
 }
 
@@ -1134,6 +1201,72 @@ dbGetQuanSpectrumInfoTable <- function(db,
       )
     )
   }
+}
+
+# ---- Spectrum Information ----
+
+#' get the MSnSpectrumInfo from (a set of) PeptideID's
+#' 
+#' @param db database access 'handle'
+#' @param peptideID the PeptideID's usually come from the
+#'  PSMS table Table. This can be in numeric/character/data.frame format
+#' @param SQL allows the function to return the SQL query statement in stead of
+#'  a data.frame  
+#' @return a data.frame containing requested data from the MSnSpectrumInfo table
+#'  or a character string specifying an SQL query
+#' @export
+dbGetMSnSpectrumInfo <- function(db, peptideID, SQL = FALSE){
+  if (is.Class(peptideID,"data.frame")){
+    if ("PeptideID" %in% peptideID){
+      peptideID <- peptideID$PeptideID
+    } else {
+      peptideID <- peptideID[,1]
+    }
+  }
+  return(dbGetTable(
+    db = db,
+    tablename = "MSnSpectrumInfo",
+    filtering = paste(c(" WHERE SpectrumID IN (SELECT MSnSpectrumInfoSpectrumID  FROM TargetPsmsMSnSpectrumInfo WHERE TargetPsmsPeptideID IN (",
+                        paste(c("'",
+                                paste(peptideID,collapse = "','"),
+                                "'"),
+                              collapse = ""),
+                        "))"),
+                      collapse = ""),
+    sortorder = NA,
+    SQL = SQL))
+}
+
+#' get the MassSpectrumItems info from (a set of) PeptideID's
+#' 
+#' @param db database access 'handle'
+#' @param peptideID the PeptideID's usually come from the
+#'  PSMS table Table. This can be in numeric/character/data.frame format
+#' @param SQL allows the function to return the SQL query statement in stead of
+#'  a data.frame  
+#' @return a data.frame containing requested data from the MassSpectrumItems
+#'  table or a character string specifying an SQL query
+#' @export
+dbGetMassSpectrumItems <- function(db, peptideID, SQL = FALSE){
+  if (is.Class(peptideID,"data.frame")){
+    if ("PeptideID" %in% peptideID){
+      peptideID <- peptideID$PeptideID
+    } else {
+      peptideID <- peptideID[,1]
+    }
+  }
+  return(dbGetTable(
+    db = db,
+    tablename = "MassSpectrumItems",
+    filtering = paste(c(" WHERE ID IN (SELECT MSnSpectrumInfoSpectrumID  FROM TargetPsmsMSnSpectrumInfo WHERE TargetPsmsPeptideID IN (",
+                        paste(c("'",
+                                paste(peptideID,collapse = "','"),
+                                "'"),
+                              collapse = ""),
+                        "))"),
+                      collapse = ""),
+    sortorder = NA,
+    SQL = SQL))
 }
 
 # ---- Modifications ----

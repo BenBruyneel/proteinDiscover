@@ -459,6 +459,8 @@ determineBlobTypes <- function(theTable, minimumNumber = 1,
    blobDF <- blobDF %>% dplyr::filter(!(.data$name %in% columnSpecials()$names))
   }
   blobDF <- determineBlobLengths(blobDF = blobDF, theTable = theTable)
+  # remove NA and NaN length's
+  blobDF <- blobDF[!is.na(blobDF$length),]
   blobDF <- dplyr::bind_cols(blobDF, blobEstimateTypes(
                                                 blobLengths = blobDF$length,
                                                 minimumNumber = minimumNumber,
@@ -486,10 +488,10 @@ determineBlobTypes <- function(theTable, minimumNumber = 1,
 #'
 #' @param df   data.frame coming from a table from a Proteome Discoverer
 #'  database (eg .pdResult files)
-#' @param blobDF  must be data.frame with 3 columns: name (columnName),
-#'  what (type) & minimumSize (number of values in a cell) default = NA.
-#'  If 'what' in the data.frame = NA, then the columnVector will not be
-#'  converted, but returned as it is
+#' @param blobDF  must be data.frame with 4 columns: name (columnName),
+#'  length (number of bytes per cell), what (type) & minimumSize (number of
+#'  values in a cell) default = NA. If 'what' in the data.frame = NA, then the
+#'  columnVector will not be converted, but returned as it is
 #' @param minimumNumber this defines the minimum number of columns a
 #'  blob/raw type column should be split into. In TMT10plex experiments, the
 #'  minimumNumber will usually be 10, becauseyou have 10 channels/abundances
@@ -540,6 +542,8 @@ dfTransformRaws <- function(df, blobDF = NA,
   if (identical(blobDF,NA)){
     return(df)
   }
+  # remove NA and NaN length's
+  blobDF <- blobDF[!is.na(blobDF$length),]
   # start a new data.frame w/o the blob columns
   newdf <- df %>% dplyr::select(-blobDF$name)
   for (counter in 1:nrow(blobDF)){

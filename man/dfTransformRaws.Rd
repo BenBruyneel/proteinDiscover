@@ -18,10 +18,10 @@ dfTransformRaws(
 \item{df}{data.frame coming from a table from a Proteome Discoverer
 database (eg .pdResult files)}
 
-\item{blobDF}{must be data.frame with 3 columns: name (columnName),
-what (type) & minimumSize (number of values in a cell) default = NA.
-If 'what' in the data.frame = NA, then the columnVector will not be
-converted, but returned as it is}
+\item{blobDF}{must be data.frame with 4 columns: name (columnName),
+length (number of bytes per cell), what (type) & minimumSize (number of
+values in a cell) default = NA. If 'what' in the data.frame = NA, then the
+columnVector will not be converted, but returned as it is}
 
 \item{minimumNumber}{this defines the minimum number of columns a
 blob/raw type column should be split into. In TMT10plex experiments, the

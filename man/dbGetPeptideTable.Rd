@@ -2,11 +2,12 @@
 % Please edit documentation in R/proteinDatabase.R
 \name{dbGetPeptideTable}
 \alias{dbGetPeptideTable}
-\title{get the paptide table belonging defined by PeptideIDs}
+\title{get the paptide table belonging defined by PeptideIDs ot proteinGroupIDs}
 \usage{
 dbGetPeptideTable(
   db,
   peptideIDs = NA,
+  proteinGroupIDs = NA,
   columns = NA,
   masterProtein = TRUE,
   sortorder = NA,
@@ -19,6 +20,12 @@ dbGetPeptideTable(
 \item{peptideIDs}{the peptideIDs to be retrieved. This can be in numeric or
 character vector format OR the output from the dbGetPeptideIDs function
 (a data.frame with column "TargetPeptideGroupsPeptideGroupID")}
+
+\item{proteinGroupIDs}{the proteinGroupIDs usually come from the
+TargetProtein Table. This can be in numeric or character vector format.
+Note: if this parameter is not NA, then peptideIDs will be ignored. This
+makes it possible to retrieve the peptides belonging to a protein w/o first
+having to retrieve toe Peptide ID's}
 
 \item{columns}{allows the selection of columns to take from the table,
 default = NA (all columns)}
@@ -39,5 +46,5 @@ a data.frame containing requested data from the peptide table or
  a character string specifying a SQL query
 }
 \description{
-get the paptide table belonging defined by PeptideIDs
+get the paptide table belonging defined by PeptideIDs ot proteinGroupIDs
 }
