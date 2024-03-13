@@ -1239,7 +1239,11 @@ dbGetMSnSpectrumInfo <- function(db, peptideID, SQL = FALSE){
 
 #' get the MassSpectrumItems info from (a set of) PeptideID's
 #' 
-#' @param db database access 'handle'
+#' @param db database access 'handle' (to the .pdResult file)
+#' @param dbDetail database access 'handle' to the details file (.pdResultDetails). This is needed
+#'  for at least Proteome Discover 3.1, since the "MassSpectrumItems" table is located in a
+#'  different file than the e.g. the psm table. Note that if the 'SQL' parameter is set to TRUE, the
+#'  function will only return the last SQL query (querying the .pdResultDetails table).
 #' @param peptideID the PeptideID's usually come from the
 #'  PSMS table Table. This can be in numeric/character/data.frame format
 #' @param SQL allows the function to return the SQL query statement in stead of
@@ -1247,7 +1251,7 @@ dbGetMSnSpectrumInfo <- function(db, peptideID, SQL = FALSE){
 #' @return a data.frame containing requested data from the MassSpectrumItems
 #'  table or a character string specifying an SQL query
 #' @export
-dbGetMassSpectrumItems <- function(db, peptideID, SQL = FALSE){
+dbGetMassSpectrumItems <- function(db, dbDetail = NA, peptideID, SQL = FALSE){
   if (is.Class(peptideID,"data.frame")){
     if ("PeptideID" %in% peptideID){
       peptideID <- peptideID$PeptideID
@@ -1255,18 +1259,41 @@ dbGetMassSpectrumItems <- function(db, peptideID, SQL = FALSE){
       peptideID <- peptideID[,1]
     }
   }
-  return(dbGetTable(
-    db = db,
-    tablename = "MassSpectrumItems",
-    filtering = paste(c(" WHERE ID IN (SELECT MSnSpectrumInfoSpectrumID  FROM TargetPsmsMSnSpectrumInfo WHERE TargetPsmsPeptideID IN (",
-                        paste(c("'",
-                                paste(peptideID,collapse = "','"),
-                                "'"),
-                              collapse = ""),
-                        "))"),
-                      collapse = ""),
-    sortorder = NA,
-    SQL = SQL))
+  if (identical(dbDetail, NA)){
+    return(dbGetTable(
+      db = db,
+      tablename = "MassSpectrumItems",
+      filtering = paste(c(" WHERE ID IN (SELECT MSnSpectrumInfoSpectrumID FROM TargetPsmsMSnSpectrumInfo WHERE TargetPsmsPeptideID IN (",
+                          paste(c("'",
+                                  paste(peptideID,collapse = "','"),
+                                  "'"),
+                                collapse = ""),
+                          "))"),
+                        collapse = ""),
+      sortorder = NA,
+      SQL = SQL))
+  } else {
+    ids <- dbGetTable(db = db, tablename = "MSnSpectrumInfo", columns = "SpectrumID",
+                      filtering = paste(c(" WHERE SpectrumID IN (SELECT MSnSpectrumInfoSpectrumID FROM TargetPsmsMSnSpectrumInfo WHERE TargetPsmsPeptideID IN (",
+                                          paste(c("'",
+                                                  paste(peptideID, collapse = "','"),
+                                                  "'"),
+                                                collapse = ""),
+                                          "))"),
+                                        collapse = ""),
+                                        sortorder = NA, SQL = FALSE)[,1]
+    if (length(ids) > 0){
+      result <- dbGetTable(db = dbDetail,
+                           tablename = "MassSpectrumItems",
+                           filtering = paste(c(" WHERE ID IN ('",
+                                               paste(ids, collapse = "','"),
+                                               "')"), collapse = ""),
+                           sortorder = NA, SQL = SQL)
+    } else {
+      result <- NA
+    }
+    return(result)
+  }
 }
 
 # ---- Modifications ----

@@ -14,11 +14,11 @@ Install with the command:
 
 devtools::install_github("BenBruyneel/proteinDiscover")
 
-Latest update (v0.10.0) : revisited all functions and attempted to make argument names etc more consistent. Please note that this can have consequences for older code using these functions
+Update (v0.10.0) : revisited all functions and attempted to make argument names etc more consistent. Please note that this can have consequences for older code using these functions
 
-March 11, 2024: Please note that pdResult files coming from Proteome Discoverer 3.1 do not seem to contain the table 'MassSpectrumItems' anymore. Until I figure out where the MS2 spectra information is located, functions working with this table (and the previously related tables) will NOT work. 
+Update (v0.11.0) : newer versions of Proteome Discoverer (latest version I have seen is v3.1) have a different of storing some data. Most of the tables are still in the .pdResult files, but (MS2 & MS3) spectrum information is stored in the .pdResultDetails files. Please note that the current implementation of all spectrum functions in this package is not final.  
 
 Work in progress!
 
-March 11, 2024
+March 13, 2024
 

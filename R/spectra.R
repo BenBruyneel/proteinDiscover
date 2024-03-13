@@ -42,8 +42,8 @@ transformSpectrumRaw <- function(spectrumObject){
 #' @export
 spectrum.header <- function(spectrum){
   if ("Header" %in% names(spectrum)){
-    result <- as.data.frame(spectrum$Header[-length(spectrum$Header)])
-    result2 <- t(as.data.frame(spectrum$Header$SpectrumIdentifiers))
+    result <- as.data.frame(spectrum$Header[-which(names(spectrum$Header) == "SpectrumIdentifiers")])
+    result2 <- t(as.data.frame(spectrum$Header[which(names(spectrum$Header) == "SpectrumIdentifiers")]))
     rownames(result2) <- NULL
     return(cbind(result, result2))
   }
@@ -120,8 +120,8 @@ spectrum.precursor.header <- function(spectrum){
   if ("PrecursorInfo" %in% names(spectrum)){
     spectrum <- spectrum$PrecursorInfo
     if ("SpectrumHeader" %in% names(spectrum)){
-      result <- as.data.frame(spectrum$SpectrumHeader[-length(spectrum$SpectrumHeader)])
-      result2 <- t(as.data.frame(spectrum$SpectrumHeader$SpectrumIdentifiers))
+      result <- as.data.frame(spectrum$SpectrumHeader[-which(names(spectrum$SpectrumHeader) == "SpectrumIdentifiers")])
+      result2 <- t(as.data.frame(spectrum$SpectrumHeader[which(names(spectrum$SpectrumHeader) == "SpectrumIdentifiers")]))
       rownames(result2) <- NULL
       return(cbind(result, result2))
     }
@@ -133,17 +133,26 @@ spectrum.precursor.header <- function(spectrum){
 #' 'transformSpectrumRaw': spectrum parent scan event
 #'
 #' @param spectrum list object containing info on a spectrum
+#' @param returnRaw logical vector, if TRUE them the data is returned as a list. if FALSE (default)
+#'  then a data.frame of all character-type data is returned' 
 #'
-#' @return data.frame
+#' @return data.frame or list
 #' 
 #' @export
-spectrum.precursor.scanEvent <- function(spectrum){
+spectrum.precursor.scanEvent <- function(spectrum, returnRaw = FALSE){
   if ("PrecursorInfo" %in% names(spectrum)){
     spectrum <- spectrum$PrecursorInfo
     if ("ScanEvent" %in% names(spectrum)){
-      result <- as.data.frame(spectrum$ScanEvent)
-      rownames(result) <- NULL
-      return(result)
+      if (returnRaw) {
+        return(spectrum$ScanEvent)
+      } else {
+        result <- as.data.frame(    # remove all non character items
+          spectrum$ScanEvent[-which(unname(unlist(lapply(spectrum$ScanEvent,
+                                                         class))) != "character")]
+        )
+        rownames(result) <- NULL
+        return(result)
+      }
     }
   }
   return(NA)

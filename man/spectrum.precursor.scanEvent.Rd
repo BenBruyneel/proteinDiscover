@@ -5,13 +5,16 @@
 \title{gets the info in the list object coming from the function
 'transformSpectrumRaw': spectrum parent scan event}
 \usage{
-spectrum.precursor.scanEvent(spectrum)
+spectrum.precursor.scanEvent(spectrum, returnRaw = FALSE)
 }
 \arguments{
 \item{spectrum}{list object containing info on a spectrum}
+
+\item{returnRaw}{logical vector, if TRUE them the data is returned as a list. if FALSE (default)
+then a data.frame of all character-type data is returned'}
 }
 \value{
-data.frame
+data.frame or list
 }
 \description{
 gets the info in the list object coming from the function

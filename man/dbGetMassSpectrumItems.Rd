@@ -4,10 +4,15 @@
 \alias{dbGetMassSpectrumItems}
 \title{get the MassSpectrumItems info from (a set of) PeptideID's}
 \usage{
-dbGetMassSpectrumItems(db, peptideID, SQL = FALSE)
+dbGetMassSpectrumItems(db, dbDetail = NA, peptideID, SQL = FALSE)
 }
 \arguments{
-\item{db}{database access 'handle'}
+\item{db}{database access 'handle' (to the .pdResult file)}
+
+\item{dbDetail}{database access 'handle' to the details file (.pdResultDetails). This is needed
+for at least Proteome Discover 3.1, since the "MassSpectrumItems" table is located in a
+different file than the e.g. the psm table. Note that if the 'SQL' parameter is set to TRUE, the
+function will only return the last SQL query (querying the .pdResultDetails table).}
 
 \item{peptideID}{the PeptideID's usually come from the
 PSMS table Table. This can be in numeric/character/data.frame format}
